@@ -274,7 +274,7 @@ button{border-radius:16px;background:linear-gradient(180deg,#d12d34,#a81c22);box
 #mic svg{width:22px;height:22px}
 .dbtn.sq{flex:none;width:58px;padding:0}
 .dbtn:disabled{opacity:.55}
-.dtxt{display:block;width:auto;margin:10px 4px 0 auto;font-size:12px;color:var(--muted)}
+.dlinks{display:flex;justify-content:space-between;margin:10px 4px 0}.dlinks .lnk{width:auto;font-size:12px;color:var(--muted)}
 #scanst{display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:rgba(200,169,116,.07);border:1px solid rgba(200,169,116,.22);font-size:13px;line-height:1.5;color:#dcc89d;white-space:pre-line}
 #scanst.on:not(:empty){display:block}
 .vbox{display:none;margin-top:10px;padding:14px;border-radius:18px;background:var(--card);border:1px solid rgba(255,255,255,.07)}
@@ -303,7 +303,7 @@ button{border-radius:16px;background:linear-gradient(180deg,#d12d34,#a81c22);box
    <button type="button" class="dbtn" id="scanbtn" aria-label="Fahrzeugschein fotografieren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Fahrzeugschein</span></button>
    <button type="button" class="dbtn sq" id="scangal" aria-label="Foto aus Galerie wählen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.7"/><path d="M21 16l-5-5-9 9"/></svg></button>
   </div>
-  <button type="button" class="lnk dtxt" id="vtog">Text eintippen</button>
+  <div class="dlinks"><button type="button" class="lnk" id="kibtn">KI-Scan einrichten</button><button type="button" class="lnk" id="vtog">Text eintippen</button></div>
   <div id="scanst"></div>
   <div class="vbox" id="vbox">
    <textarea id="sprach" placeholder="z.B. „Morgen um 18 Uhr Opel Insignia, große Inspektion mit Luftfilter und Zündkerzen.“"></textarea>
@@ -1042,7 +1042,7 @@ $('auftrag').addEventListener('click',e=>{
 });
 
 /* ---------- Fahrzeugschein: Foto -> Felder (v2) ---------- */
-const FS_MODELLE=['Insignia','Astra','Corsa','Zafira','Vectra','Meriva','Mokka','Adam','Agila','Tigra','Omega','Signum','Combo','Vivaro','Movano','Antara','Ampera','Cascada','Crossland','Grandland','Golf','Polo','Passat','Tiguan','Touran','Touareg','Caddy','Transporter','Sharan','Arteon','Jetta','Scirocco','Beetle','Lupo','Bora','Fiesta','Focus','Mondeo','Kuga','Fusion','Galaxy','Octavia','Fabia','Superb','Yeti','Ibiza','Leon','Ateca','Arona','Clio','Megane','Scenic','Twingo','Kadjar','Captur','Corolla','Yaris','Auris','Avensis','Civic','Jazz','Accord','Tucson','Sportage','Ceed','Picanto','Stonic','Sorento','Qashqai','Micra','Juke','Panda','Punto','Tipo','Doblo','Ducato','Giulietta','Duster','Sandero','Logan','Aveo','Cruze','Captiva','Orlando','Kangoo','Trafic','Master','Vito','Sprinter','Viano','Berlingo','Partner','Expert','Boxer','Jumper','Scudo','Crafter','Amarok','Multivan','Kodiaq','Karoq','Citigo','Cooper','Clubman','Countryman','Cayenne','Macan','Panamera','Boxster','Cayman'];
+const FS_MOD={opel:['Insignia','Astra','Corsa','Zafira','Vectra','Meriva','Mokka','Adam','Agila','Tigra','Omega','Signum','Combo','Vivaro','Movano','Antara','Ampera','Cascada','Crossland','Grandland'],volkswagen:['Golf','Polo','Passat','Tiguan','Touran','Touareg','Caddy','Transporter','Sharan','Arteon','Jetta','Scirocco','Beetle','Lupo','Bora','Multivan','Crafter','Amarok'],ford:['Fiesta','Focus','Mondeo','Kuga','Fusion','Galaxy'],skoda:['Octavia','Fabia','Superb','Yeti','Kodiaq','Karoq','Citigo'],seat:['Ibiza','Leon','Ateca','Arona'],renault:['Clio','Megane','Scenic','Twingo','Kadjar','Captur','Duster','Kangoo','Trafic','Master'],toyota:['Corolla','Yaris','Auris','Avensis'],honda:['Civic','Jazz','Accord'],hyundai:['Tucson'],kia:['Sportage','Ceed','Picanto','Stonic','Sorento'],nissan:['Qashqai','Micra','Juke'],fiat:['Panda','Punto','Tipo','Doblo','Ducato'],mini:['Cooper','Clubman','Countryman'],porsche:['Cayenne','Macan','Panamera','Boxster','Cayman'],mercedes:['Sprinter','Vito','Viano']};
 function fsLev(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j}
   for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
 function fsFuzzy(tokens,list,minLen){
@@ -1059,7 +1059,7 @@ function fsFin(lines){
     for(let a=0;a<toks.length;a++){let t='';for(let b=a;b<Math.min(a+3,toks.length);b++){t+=toks[b];if(t.length>19)break;
       let c=t.replace(/[OQ]/g,'0').replace(/I/g,'1');const joined=b>a;
       [c.length===17?c:'',c.length===18?c.slice(1):''].forEach(v=>{
-        if(!v||!/^[A-HJ-NPR-Z0-9]{17}$/.test(v))return;
+        if(!v||!/^[A-HJ-NPR-Z0-9]{17}$/.test(v)||!/^[A-Z]/.test(v)||!/[A-HJ-NPR-TV-Y1-9]/.test(v[9]))return;
         const dig=(v.match(/\d/g)||[]).length;if(dig<4||dig>15)return;
         const ok=!!(WMI[v.slice(0,3)]||v.slice(0,2)==='JT');if(joined&&!ok)return;let s=1+(dig>=6?1:0)+(ok?4:0);
         cnt[v]=Math.max(cnt[v]||0,s);
@@ -1073,23 +1073,32 @@ function parseSchein(text){
   const U=lines.map(l=>l.toUpperCase());
   const idx=re=>U.findIndex(l=>re.test(l));
   const fin=fsFin(lines);if(fin)out.fin=fin;
-  /* Erstzulassung (Feld B): erstes vollstaendiges Datum */
-  let dl=-1,dm=null;const D=/(\d{2})[.,](\d{2})[.,]((?:19|20)\d{2})(?!\d)/;
-  for(let i=0;i<lines.length;i++){const m=lines[i].match(D);if(m&&+m[2]>=1&&+m[2]<=12&&+m[1]>=1&&+m[1]<=31&&+m[3]<=new Date().getFullYear()+1){dl=i;dm=m;break}}
+  /* Erstzulassung (Feld B): haeufigstes Datum, Datum in der HSN-Zeile bevorzugt */
+  let dl=-1,dm=null;const D=/(\d{2})\s?[.,]\s?(\d{2})\s?[.,]\s?((?:19|20)\d{2})(?!\d)/g,dc={},first={};
+  lines.forEach((ln,i)=>{let m;D.lastIndex=0;while((m=D.exec(ln))){if(+m[2]>=1&&+m[2]<=12&&+m[1]>=1&&+m[1]<=31&&+m[3]<=new Date().getFullYear()+1){
+    const k=m[1]+'.'+m[2]+'.'+m[3];dc[k]=(dc[k]||0)+1+(i<4?1:0)+(/EMISSION/.test(ln)||(U[i-1]||'').includes('EMISSION')?1:0);if(!first[k])first[k]=[i,[m[0],m[1],m[2],m[3]]]}}});
+  {const ks=Object.keys(dc).sort((a,b)=>dc[b]-dc[a]||first[a][0]-first[b][0]);if(ks.length){dl=first[ks[0]][0];dm=first[ks[0]][1]}}
   if(dm){out.ez=dm[1]+'.'+dm[2]+'.'+dm[3];out.jahr=dm[3]}
-  /* HSN/TSN: stehen in der Zeile direkt hinter dem Datum (Feld 2.1 / 2.2) */
-  if(dm){
+  /* HSN/TSN: TSN-Token = 3 Zeichen + 5 Ziffern (z.B. AIU00024), HSN = 4 Ziffern davor */
+  let tl=-1;
+  for(let i=0;i<Math.min(lines.length,12)&&!out.hsn;i++){
+    const tk=lines[i].split(' ');
+    for(let k=0;k<tk.length;k++){const t=tk[k].replace(/[^A-Za-z0-9]/g,'').replace(/l/g,'I').toUpperCase();
+      if(/^[A-Z0-9]{3}\d{5}$/.test(t)&&/[A-Z]{2}/.test(t.slice(0,3))){
+        for(let q=k-1;q>=Math.max(0,k-4);q--){const h=tk[q].replace(/[^A-Za-z0-9]/g,'').replace(/O/g,'0');if(/^\d{4}$/.test(h)){out.hsn=h;out.tsn=t.slice(0,3);tl=i;break}}
+        if(out.hsn)break}}}
+  if(!out.hsn&&dm){
     const rest=lines[dl].slice(lines[dl].indexOf(dm[0])+dm[0].length).split(' ');
     let h=-1;for(let i=0;i<rest.length;i++){if(/^\d{4}$/.test(rest[i].replace(/[^A-Za-z0-9]/g,''))){h=i;break}}
     if(h>=0){out.hsn=rest[h].replace(/[^0-9]/g,'');
       for(let i=h+1;i<rest.length;i++){const t=rest[i].replace(/[^A-Za-z0-9]/g,'');if(t.length>=3){const c=t.slice(0,3).replace(/l/g,'I').toUpperCase();if(/^[A-Z0-9]{3}$/.test(c))out.tsn=c;break}}}
   }
-  if(!out.hsn){const m=flat.toUpperCase().match(/\b(\d{4})\s*[\/ ]\s*([A-Z0-9]{3})\b/);if(m){out.hsn=m[1];out.tsn=m[2]}}
+  
   /* Leistung kW (P.2 / P.4 = kW / Drehzahl, z.B. 0191/05500) */
-  {const m=flat.match(/(?<!\d)0?(\d{2,3})\s*\/\s*0(\d{4})(?!\d)/);if(m&&+m[1]>=15&&+m[1]<=800&&+m[2]>=800)out.kw=m[1]}
+  {const re=/(?<![\d*])0?(\d{2,3})\s*\/\s*0?(\d{4,5})(?![\d*A-Z])/g;let m;while((m=re.exec(flat))){if(+m[1]>=15&&+m[1]<=800&&+m[2]>=800&&+m[2]<=12000&&!/^(19|20)\d\d$/.test(m[2])){out.kw=m[1];break}}}
   /* Hubraum (P.1) */
   {let m=flat.match(/\bP\W?[1lI]\W{0,6}0?(\d{3,4})(?!\d)/i);
-   if(!m)m=flat.match(/\b[0-9B]{2}A[0O]\b\W{0,6}0(\d{4})(?!\d)/i);
+   if(!m)m=flat.match(/\b[0-9B]{2}A[0-9A-Z]\b\W{0,8}0?(\d{3,4})(?!\d)/i);
    if(m&&+m[1]>=400&&+m[1]<=9999)out.hubraum=String(+m[1])}
   /* Kraftstoff */
   {const toks=flat.toUpperCase().split(/[^A-ZÄÖÜ]+/).filter(t=>t.length>=5);
@@ -1109,9 +1118,12 @@ function parseSchein(text){
   {const w=out.fin&&(WMI[out.fin.slice(0,3)]||(out.fin.slice(0,2)==='JT'?'Toyota':''));
    const toks=flat.toUpperCase().split(/[^A-ZÄÖÜ]+/).filter(Boolean);
    const brands=[...new Set(Object.values(WMI))];
-   const bt=fsFuzzy(toks,brands.filter(x=>!/-/.test(x)),4);
+   const bt=brands.filter(x=>!/-/.test(x)&&x.length>=5).find(x=>toks.includes(x.toUpperCase()));
    const marke=w||bt;if(marke)out.marke=marke;
-   const mo=fsFuzzy(toks.filter(t=>!marke||t!==marke.toUpperCase()),FS_MODELLE,5);if(mo)out.modell=mo}
+   const key=marke?Object.keys(FS_MOD).find(k=>marke.toLowerCase().startsWith(k)):null;
+   const ok=toks.filter(t=>!marke||t!==marke.toUpperCase());
+   const mo=key?(fsFuzzy(ok,FS_MOD[key],5)||ok.map(t=>FS_MOD[key].find(m=>m.toUpperCase()===t)).find(Boolean)):[].concat(...Object.values(FS_MOD)).find(m=>ok.includes(m.toUpperCase()));
+   if(mo)out.modell=mo}
   return out;
 }
 
@@ -1128,7 +1140,7 @@ function mergeScan(list){
   res.n=n;return res;
 }
 const scanScore=r=>['kz','marke','modell','ez','fin','hsn','hubraum','kw','kraftstoff'].filter(k=>r[k]).length;
-const OKW=/ZULASSUNG|BESCHEINIGUNG|BUNDESREPUBLIK|DEUTSCHLAND|KENNZEICHEN|ANSCHRIFT|FAHRZEUG|VORNAME|FIRMENNAME|HERSTELLER|EUROP/g;
+const OKW=/ZULASSUNG|BESCHEINIGUNG|BUNDESREPUBLIK|DEUTSCHLAND|KENNZEICHEN|ANSCHRIFT|FAHRZEUG|VORNAME|FIRMENNAME|HERSTELLER|EUROP|EURO\d|DIESEL|BENZIN|ANH[ÄA]NGE|EMISSION|\d{2}\.\d{2}\.(?:19|20)\d\d|\b\d{3}\/\d{4,5}\b|\bM1\b/g;
 function bildLaden(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im)};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('bild'))};im.src=u})}
 function grauCanvas(im,maxSide){
   const w=im.naturalWidth,h=im.naturalHeight,lg=Math.max(w,h),sc=maxSide?Math.min(maxSide/lg,lg<1800?1800/lg:1):1;
@@ -1166,6 +1178,80 @@ function ladeTesseract(){
   tessP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=TESS_URL;sc.onload=res;sc.onerror=()=>{tessP=null;rej(new Error('laden'))};document.head.appendChild(sc)});
   return tessP;
 }
+/* Schraeglage: Winkel der Textzeilen schaetzen (Projektionsprofil) */
+function schiefWinkel(g,w,h){
+  let sum=0;for(let i=0;i<g.length;i++)sum+=g[i];const thr=sum/g.length-22;
+  const px=[],st=Math.max(1,Math.floor(g.length/90000));
+  for(let i=0;i<g.length;i+=1){if(g[i]<thr&&(i%st===0||st===1)){px.push(i%w,(i/w)|0)}}
+  if(px.length<600)return {a:0,c:0};
+  const sc=a=>{const r=a*Math.PI/180,s=Math.sin(r),c=Math.cos(r),H=new Float64Array(w+h+4),off=w*0.5+2;
+    for(let i=0;i<px.length;i+=2){H[(px[i+1]*c-px[i]*s+off)|0]++}
+    let q=0;for(let i=0;i<H.length;i++)q+=H[i]*H[i];return q};
+  let best=0,bs=-1,s0=sc(0);
+  for(let a=-15;a<=15;a+=1){const v=sc(a);if(v>bs){bs=v;best=a}}
+  for(let a=best-1;a<=best+1;a+=0.25){const v=sc(a);if(v>bs){bs=v;best=a}}
+  return {a:best,c:bs/s0};
+}
+function entzerre(c){
+  const k=Math.min(1,800/Math.max(c.width,c.height)),w=Math.round(c.width*k),h=Math.round(c.height*k);
+  const t=document.createElement('canvas');t.width=w;t.height=h;const x=t.getContext('2d');x.drawImage(c,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,g=new Uint8Array(w*h);for(let i=0;i<g.length;i++)g[i]=d[i*4];
+  const r=schiefWinkel(g,w,h);
+  if(Math.abs(r.a)<0.6||r.c<1.04)return c;
+  const o=document.createElement('canvas'),R=r.a*Math.PI/180,cw=c.width,ch=c.height;
+  o.width=Math.round(Math.abs(cw*Math.cos(R))+Math.abs(ch*Math.sin(R)));o.height=Math.round(Math.abs(cw*Math.sin(R))+Math.abs(ch*Math.cos(R)));
+  const y=o.getContext('2d');y.fillStyle='#fff';y.fillRect(0,0,o.width,o.height);
+  y.translate(o.width/2,o.height/2);y.rotate(-R);y.drawImage(c,-cw/2,-ch/2);return o;
+}
+
+
+/* ---------- KI-Scan (Claude liest den Schein) ---------- */
+const KI_MODEL='claude-sonnet-5-5';
+const kiKey=()=>{try{return localStorage.getItem('mamo_ki')||''}catch(e){return ''}};
+function kiSetzen(){
+  const v=prompt('Anthropic-API-Schlüssel einfügen (beginnt mit sk-ant-). Leer lassen = KI-Scan aus, es wird dann nur die einfache Texterkennung benutzt.',kiKey());
+  if(v===null)return;
+  try{localStorage.setItem('mamo_ki',v.trim())}catch(e){}
+  toast(v.trim()?'KI-Scan ist an':'KI-Scan ist aus');kiAnzeige();
+}
+function kiAnzeige(){const b=$('kibtn');if(b)b.textContent=kiKey()?'KI-Scan: an':'KI-Scan einrichten'}
+async function kiBild(file){
+  const im=await bildLaden(file),sc=Math.min(1,1800/Math.max(im.naturalWidth,im.naturalHeight));
+  const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.88).split(',')[1];
+}
+const KI_PROMPT='Das Bild zeigt einen deutschen Fahrzeugschein (Zulassungsbescheinigung Teil I). Er kann gedreht, schief, schlecht beleuchtet oder nur eine aufgeklappte Innenseite sein. Lies die Felder EXAKT ab und rate nichts. Antworte NUR mit einem JSON-Objekt, ohne weiteren Text und ohne Markdown: {"kennzeichen":"Feld A, z.B. GAP-ML 175","marke":"Feld D.1","modell":"Feld D.3 Handelsbezeichnung","erstzulassung":"Feld B als TT.MM.JJJJ","fin":"Feld E, genau 17 Zeichen, enthält nie die Buchstaben I, O, Q","hsn":"Feld 2.1, 4 Ziffern","tsn":"Feld 2.2, nur die ersten 3 Zeichen","hubraum":"Feld P.1 in cm3, nur die Zahl","kw":"Feld P.2 in kW, nur die Zahl","kraftstoff":"Feld P.3, z.B. Benzin oder Diesel","vorname":"Feld C.1.2","nachname":"Feld C.1.1"}. Felder, die nicht sichtbar oder nicht sicher lesbar sind, setze auf null.';
+async function kiScan(file){
+  const b64=await kiBild(file);
+  let r;
+  try{
+    r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':kiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:KI_MODEL,max_tokens:700,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:KI_PROMPT}]}]})});
+  }catch(e){throw new Error('netz')}
+  if(r.status===401||r.status===403)throw new Error('key');
+  if(!r.ok)throw new Error('api'+r.status);
+  const j=await r.json(),t=(j.content||[]).map(x=>x.text||'').join('');
+  const m=t.match(/\{[\s\S]*\}/);if(!m)throw new Error('antwort');
+  const o=JSON.parse(m[0]),c=v=>{v=v==null?'':String(v).trim();return /^(null|-|)$/i.test(v)?'':v};
+  const res={n:{}},ok=(k,v,good)=>{if(v){res[k]=v;res.n[k]=good?2:1}};
+  let kz=c(o.kennzeichen).toUpperCase().replace(/\s+/g,' ');const pm=kz.match(/^([A-ZÄÖÜ]{1,3})[\s\-–·.]*([A-Z]{1,2})\s?(\d{1,4})\s?([EH])?$/);
+  if(pm)kz=pm[1]+'-'+pm[2]+' '+pm[3]+(pm[4]||'');ok('kz',kz,!!pm);
+  const fin=c(o.fin).toUpperCase().replace(/[^A-Z0-9]/g,'');
+  ok('fin',fin,/^[A-HJ-NPR-Z0-9]{17}$/.test(fin)&&!!(WMI[fin.slice(0,3)]||fin.slice(0,2)==='JT'));
+  let brand=c(o.marke).split(/[,\/]/)[0].trim();brand=brand.length<=3?brand.toUpperCase():fsNice(brand);ok('marke',brand,!!brand);
+  const w=WMI[fin.slice(0,3)];if(w&&brand&&!brand.toUpperCase().includes(w.toUpperCase().split('-')[0].slice(0,4))&&!w.toUpperCase().includes(brand.toUpperCase().slice(0,4)))res.n.marke=1;
+  {const mo=c(o.modell);ok('modell',/\d/.test(mo)?mo:fsNice(mo),!!mo)}
+  const d=c(o.erstzulassung).match(/^(\d{2})\.(\d{2})\.((?:19|20)\d{2})$/);
+  if(d){res.ez=d[0];res.jahr=d[3];res.n.ez=(+d[2]>=1&&+d[2]<=12&&+d[1]>=1&&+d[1]<=31&&+d[3]<=new Date().getFullYear()+1)?2:1}
+  const hsn=c(o.hsn).replace(/\D/g,'');ok('hsn',hsn,/^\d{4}$/.test(hsn));
+  const tsn=c(o.tsn).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);ok('tsn',tsn,tsn.length===3);
+  const hub=c(o.hubraum).replace(/\D/g,'');ok('hubraum',hub?String(+hub):'',+hub>=400&&+hub<=9999);
+  const kw=c(o.kw).replace(/\D/g,'');ok('kw',kw?String(+kw):'',+kw>=15&&+kw<=800);
+  const kr=c(o.kraftstoff);ok('kraftstoff',kr?fsNice(kr):'',!!kr);
+  const nm=[c(o.vorname),c(o.nachname)].filter(Boolean).join(' ');ok('kunde',nm?fsNice(nm):'',!!(c(o.vorname)&&c(o.nachname)));
+  return res;
+}
 let scanLaeuft=false;
 async function scanStart(file){
   if(!file||scanLaeuft)return;
@@ -1173,6 +1259,12 @@ async function scanStart(file){
   const st=$('scanst'),btn=$('scanbtn');btn.disabled=true;st.classList.add('on');
   let worker=null,label='';
   try{
+    if(kiKey()){
+      try{label='';st.textContent='Fahrzeugschein wird mit KI gelesen … (ca. 5–10 Sekunden)';const kr=await kiScan(file);scanUebernehmen(kr,false);return}
+      catch(e){const m=e&&e.message||'';
+        if(m==='key'){st.textContent='Der KI-Schlüssel wird nicht akzeptiert. Bitte unten „KI-Scan“ antippen und den Schlüssel neu eintragen.';return}
+        st.textContent='KI-Scan nicht möglich ('+(m==='netz'?'keine Verbindung':'Fehler')+'), ich versuche die einfache Texterkennung …'}
+    }
     st.textContent='Texterkennung wird geladen … (beim ersten Mal ca. 10–20 MB, Internet nötig)';
     await ladeTesseract();
     worker=await Tesseract.createWorker('deu',1,{logger:m=>{
@@ -1191,8 +1283,8 @@ async function scanStart(file){
       if(sc>bs){bs=sc;best=deg;base=c}
       if(sc>=4)break;
     }
-    if(bs<2){st.textContent='Das sieht nicht nach einem Fahrzeugschein aus. Bitte Schein flach hinlegen, ganz ins Bild nehmen, gutes Licht, keine Spiegelung.';return}
     /* 2. Mehrere Durchgaenge, Ergebnisse abgleichen */
+    try{label='Bild wird gerade gerichtet …';base=entzerre(base)}catch(e){}
     const bin=binaer(kopie(base));
     const plan=[[base,'6','Durchgang 1/4'],[base,'4','Durchgang 2/4'],[bin,'6','Durchgang 3/4'],[bin,'4','Durchgang 4/4']];
     const list=[];let m=null;
@@ -1288,6 +1380,7 @@ document.addEventListener('click',e=>{
 
 (function(){const vb=$('vbox'),op=()=>vb.classList.add('open');
  $('mic').addEventListener('click',op,true);
+ $('kibtn').addEventListener('click',kiSetzen);kiAnzeige();
  $('vtog').addEventListener('click',()=>{vb.classList.toggle('open');if(vb.classList.contains('open'))$('sprach').focus()});
  $('sprach').addEventListener('input',op);
 })();
