@@ -212,6 +212,32 @@ body.zeigeA{overflow:hidden}
  .apaper{box-shadow:none!important;border-radius:0!important;padding:0!important}
  .noprint{display:none!important}
 }
+
+.scanbox{margin:0 0 16px;padding:12px;border:1px dashed #5a2428;border-radius:14px;background:#1a1011}
+.scanbox .scanbtn{display:flex;align-items:center;justify-content:center;gap:10px}
+.scanbox .scanbtn svg{width:22px;height:22px}
+.scanbox button:disabled{opacity:.6}
+#scanst{margin-top:8px;font-size:13px;color:var(--gold);line-height:1.45;white-space:pre-line}
+#scanst:empty{display:none}
+.scan{border-color:var(--gold)!important;background:#1a170f!important}
+#hsn,#tsn{text-transform:uppercase;letter-spacing:.06em}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.fgrid:empty{display:none}
+.fth{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.fth img{width:100%;height:100%;object-fit:cover;display:block}
+.fth button{position:absolute;top:4px;right:4px;width:28px;height:28px;padding:0;border-radius:50%;background:rgba(0,0,0,.7);box-shadow:none;border:0;font-size:13px;letter-spacing:0}
+.fnote{margin:8px 2px 0;font-size:12px;color:var(--muted);line-height:1.4}
+#lb{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:12px}
+#lb.on{display:flex}
+#lb img{max-width:100%;max-height:100%;border-radius:6px}
+.lbimg{cursor:zoom-in}
+.alogoW{text-align:center;margin:0 0 12px}
+.alogo{width:100%;max-width:300px;border-radius:10px;display:inline-block}
+.ahead{align-items:flex-end}
+.aco b{color:#222}
+.afotos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.afotos img{width:100%;border-radius:6px;display:block;break-inside:avoid}
+.alogo,.afotos img{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 </style>
 </head>
 <body>
@@ -234,14 +260,30 @@ body.zeigeA{overflow:hidden}
 
  <section class="panel">
   <h2>Termin<button type="button" class="lnk" onclick="neu()">Neuer Auftrag</button></h2>
+  <div class="scanbox">
+   <button type="button" class="scanbtn" id="scanbtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Fahrzeugschein fotografieren</button>
+   <button type="button" class="lnk" style="margin-top:10px" id="scangal">oder Foto aus der Galerie wählen</button>
+   <div id="scanst"></div>
+   <input type="file" id="scanfile" accept="image/*" capture="environment" hidden>
+   <input type="file" id="scanfile2" accept="image/*" hidden>
+  </div>
   <label class="field"><span>Kennzeichen</span><input id="kz" type="text" placeholder="z.B. GAP-MA 123" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
    <div id="treffer"></div>
    <div id="hist"></div>
    <label class="field"><span>Marke &amp; Modell</span><input id="auto" type="text" placeholder="z.B. BMW 320d (F30)" autocomplete="off"></label>
    <div class="row">
-    <label class="field"><span>Baujahr / Erstzulassung</span><input id="jahr" type="text" inputmode="numeric" placeholder="z.B. 2016" autocomplete="off"></label>
-    <label class="field"><span>Motor / Kraftstoff</span><input id="motor" type="text" placeholder="z.B. 2.0 Diesel" autocomplete="off"></label>
+    <label class="field"><span>Erstzulassung / Baujahr</span><input id="jahr" type="text" placeholder="z.B. 14.03.2016" autocomplete="off"></label>
+    <label class="field"><span>Kraftstoff</span><input id="kraftstoff" type="text" placeholder="z.B. Diesel" autocomplete="off"></label>
    </div>
+   <div class="row">
+    <label class="field"><span>Hubraum (cm³)</span><input id="hubraum" type="text" inputmode="numeric" placeholder="z.B. 1995" autocomplete="off"></label>
+    <label class="field"><span>Leistung (kW)</span><input id="kw" type="text" inputmode="numeric" placeholder="z.B. 135" autocomplete="off"></label>
+   </div>
+   <div class="row">
+    <label class="field"><span>HSN (zu 2.1)</span><input id="hsn" type="text" placeholder="4 Zeichen" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+    <label class="field"><span>TSN (zu 2.2)</span><input id="tsn" type="text" placeholder="3 Zeichen" maxlength="3" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+   </div>
+   <label class="field"><span>Motor / Motorcode (optional)</span><input id="motor" type="text" placeholder="z.B. N47 2.0 Diesel" autocomplete="off"></label>
    <div class="row">
     <label class="field"><span>Kunde (optional)</span><input id="kunde" type="text" placeholder="Name" autocomplete="off"></label>
     <label class="field"><span>Handynummer</span><input id="tel" type="tel" inputmode="tel" placeholder="z.B. 0170 1234567" autocomplete="off"></label>
@@ -254,6 +296,14 @@ body.zeigeA{overflow:hidden}
    <label class="field"><span>Uhrzeit</span><input id="zeit" type="time" value="08:00"></label>
    <label class="field" style="grid-column:1/-1"><span>Dauer in Stunden</span><input id="dauer" type="number" inputmode="decimal" value="2" min="0.5" step="0.5"></label>
   </div>
+ </section>
+
+<section class="panel" id="fotopanel">
+  <h2>Fotos zum Auftrag<span class="lnk" id="fotoanz" style="color:var(--muted)"></span></h2>
+  <button type="button" class="go" style="margin-top:0" id="fotobtn">Foto aufnehmen / hinzufügen</button>
+  <input type="file" id="fotofile" accept="image/*" multiple hidden>
+  <div class="fgrid" id="fotoliste"></div>
+  <p class="fnote">Die Fotos erscheinen im Auftrag bzw. Kostenvoranschlag und werden beim Speichern mit dem Besuch abgelegt.</p>
  </section>
 
  <details id="kd" class="kd"><summary>Kunden &amp; Fahrzeuge<span class="badge" id="kdcnt"></span></summary>
@@ -276,6 +326,7 @@ body.zeigeA{overflow:hidden}
 </div></div>
 
 <div id="toast"></div>
+<div id="lb"></div>
 <div id="auftrag"></div>
 <div id="back" onclick="zu()"></div>
 <div id="sheet">
@@ -603,8 +654,8 @@ function kalender(){
   ende.setMinutes(ende.getMinutes()+Math.round(dauer*60));
   const ez=String(ende.getHours()).padStart(2,'0')+String(ende.getMinutes()).padStart(2,'0')+'00';
   const zeilen=[...korb].map(([n,q])=>(q>1?q+' × '+n+' (je '+fmt(PREIS[n])+')':n)+': '+fmt(q*PREIS[n]));
-  const kzv=kzText(),kmn=parseInt(String(document.getElementById('km').value).replace(/\D/g,''),10),kn=document.getElementById('kunde').value.trim();
-  const kopf=[];if(kzv)kopf.push('Kennzeichen: '+kzv);if(!isNaN(kmn))kopf.push('Kilometerstand: '+kmn.toLocaleString('de-DE')+' km');if(kn)kopf.push('Kunde: '+kn);{const tl=document.getElementById('tel').value.trim(),fn=finNorm(document.getElementById('fin').value);if(tl)kopf.push('Tel.: '+tl);if(fn)kopf.push('FIN: '+fn);{const bj=document.getElementById('jahr').value.trim(),mo=document.getElementById('motor').value.trim();if(bj)kopf.push('Baujahr: '+bj);if(mo)kopf.push('Motor: '+mo);}}
+  const oo=aktuell(),kzv=oo.kz;
+  const kopf=fzZeilen(oo).map(([l,v])=>l+': '+v);
   let text=(kopf.length?kopf.join('\n')+'\n\n':'')+teileZeilen().concat(zeilen).join('\n');
   if(t.zh>0)text+=(zeilen.length||teile.length?'\n':'')+'Arbeitszeit: '+hFmt(t.h)+' h × '+fmt(t.s)+': '+fmt(t.zh);
   if(t.r>0)text+='\n\nZwischensumme: '+fmt(t.z)+'\nRabatt '+String(t.r).replace('.',',')+' %: −'+fmt(t.rb);
@@ -624,7 +675,9 @@ function kalender(){
 const KEY='mamo_kunden_v1';
 let db={v:1,autos:{},sicherung:null,satz:null};
 let speicherOk=true;
-let lastFill={auto:'',kunde:'',tel:'',fin:'',jahr:'',motor:''};
+const FZ=['auto','kunde','tel','fin','jahr','motor','hsn','tsn','hubraum','kw','kraftstoff'];
+const FZ0=()=>{const o={};FZ.forEach(k=>o[k]='');return o};
+let lastFill=FZ0();
 const $=id=>document.getElementById(id);
 const E=x=>esc(String(x==null?'':x));
 const nk=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9ÄÖÜ]/g,'');
@@ -659,20 +712,10 @@ function kzSuche(){
   if(!q){return}
   const a=db.autos[q];
   if(a){
-    if(!$('auto').value||$('auto').value===lastFill.auto){$('auto').value=a.auto||'';lastFill.auto=a.auto||''}
-    if(!$('kunde').value||$('kunde').value===lastFill.kunde){$('kunde').value=a.kunde||'';lastFill.kunde=a.kunde||''}
-    if(!$('tel').value||$('tel').value===lastFill.tel){$('tel').value=a.tel||'';lastFill.tel=a.tel||''}
-    if(!$('fin').value||$('fin').value===lastFill.fin){$('fin').value=a.fin||'';lastFill.fin=a.fin||''}
-    if(!$('jahr').value||$('jahr').value===lastFill.jahr){$('jahr').value=a.jahr||'';lastFill.jahr=a.jahr||''}
-    if(!$('motor').value||$('motor').value===lastFill.motor){$('motor').value=a.motor||'';lastFill.motor=a.motor||''}
+    FZ.forEach(k=>{const el=$(k);if(!el.value||el.value===lastFill[k]){el.value=a[k]||'';lastFill[k]=a[k]||''}});
     zeigeHist(a);return;
   }
-  if(lastFill.auto&&$('auto').value===lastFill.auto){$('auto').value='';lastFill.auto=''}
-  if(lastFill.kunde&&$('kunde').value===lastFill.kunde){$('kunde').value='';lastFill.kunde=''}
-  if(lastFill.tel&&$('tel').value===lastFill.tel){$('tel').value='';lastFill.tel=''}
-  if(lastFill.fin&&$('fin').value===lastFill.fin){$('fin').value='';lastFill.fin=''}
-  if(lastFill.jahr&&$('jahr').value===lastFill.jahr){$('jahr').value='';lastFill.jahr=''}
-  if(lastFill.motor&&$('motor').value===lastFill.motor){$('motor').value='';lastFill.motor=''}
+  FZ.forEach(k=>{if(lastFill[k]&&$(k).value===lastFill[k]){$(k).value='';lastFill[k]=''}});
   if(q.length>=2){
     const m=Object.entries(db.autos).filter(([k])=>k.includes(q)).slice(0,5);
     tr.innerHTML=m.map(([k,x])=>'<button type="button" class="tf" data-k="'+E(k)+'">'+E(x.kz||k)+'<small>'+E(x.auto||'')+(x.kunde?' · '+E(x.kunde):'')+'</small></button>').join('');
@@ -707,8 +750,7 @@ function kmPruefen(){
 function waehle(k){
   const a=db.autos[k];if(!a)return;
   $('kz').value=a.kz||k;
-  $('auto').value=a.auto||'';$('kunde').value=a.kunde||'';$('tel').value=a.tel||'';$('fin').value=a.fin||'';$('jahr').value=a.jahr||'';$('motor').value=a.motor||'';
-  lastFill={auto:a.auto||'',kunde:a.kunde||'',tel:a.tel||'',fin:a.fin||'',jahr:a.jahr||'',motor:a.motor||''};
+  FZ.forEach(f=>{$(f).value=a[f]||'';lastFill[f]=a[f]||''});
   kzSuche();
 }
 let kdOffen=null;
@@ -741,32 +783,31 @@ function speichereBesuch(still){
   if(!korb.size&&!teile.length&&!(zahl('stunden')>0)){if(!still)toast('Warenkorb ist leer, nichts zu speichern');return false}
   const t=summen(),dv=$('datum').value||heuteIso();
   const kmv=parseInt(String($('km').value).replace(/\D/g,''),10);
-  let a=db.autos[key];if(!a)a=db.autos[key]={kz:kzv,auto:'',kunde:'',tel:'',fin:'',jahr:'',motor:'',besuche:[]};
+  let a=db.autos[key];if(!a)a=db.autos[key]=Object.assign({kz:kzv,besuche:[]},FZ0());
   if(!a.kz||/[\s-]/.test(kzv)||!/[\s-]/.test(a.kz))a.kz=kzv;
-  if($('auto').value.trim())a.auto=$('auto').value.trim();
-  if($('kunde').value.trim())a.kunde=$('kunde').value.trim();
-  if($('tel').value.trim())a.tel=$('tel').value.trim();
-  if(finNorm($('fin').value))a.fin=finNorm($('fin').value);
-  if($('jahr').value.trim())a.jahr=$('jahr').value.trim();
-  if($('motor').value.trim())a.motor=$('motor').value.trim();
-  const rec={d:dv,km:isNaN(kmv)?null:kmv,arbeiten:[...korb].map(([n,q])=>({n,q,p:PREIS[n]})),teile:teile.map(p=>({n:p.n,q:p.q,p:p.p})),stunden:t.h,satz:t.s,rabatt:t.r,summe:t.g,ts:Date.now()};
+  FZ.forEach(k=>{const v=k==='fin'?finNorm($(k).value):$(k).value.trim();if(v)a[k]=v});
+  const rec={d:dv,km:isNaN(kmv)?null:kmv,arbeiten:[...korb].map(([n,q])=>({n,q,p:PREIS[n]})),teile:teile.map(p=>({n:p.n,q:p.q,p:p.p})),stunden:t.h,satz:t.s,rabatt:t.r,summe:t.g,ts:Date.now(),fotos:fotos.map(f=>f.id)};
   const i=a.besuche.findIndex(b=>b.d===dv&&sigOf(b)===sigOf(rec));
-  if(i>=0)a.besuche[i]=rec;else a.besuche.push(rec);
-  lastFill={auto:a.auto,kunde:a.kunde,tel:a.tel||'',fin:a.fin||'',jahr:a.jahr||'',motor:a.motor||''};
+  if(i>=0){(a.besuche[i].fotos||[]).filter(x=>!rec.fotos.includes(x)).forEach(fotoDel);a.besuche[i]=rec}else a.besuche.push(rec);
+  fotos.forEach(f=>fotoPut(f.id,f.url));
+  lastFill={};FZ.forEach(k=>lastFill[k]=a[k]||'');
   persist();alles();
   toast(speicherOk?'Gespeichert: '+kzv+((a.fin&&a.fin.length!==17)?' – FIN hat '+a.fin.length+' statt 17 Zeichen':''):'Konnte nicht speichern. Bitte Sicherung nutzen.');
   return true;
 }
 function neu(){
-  if((korb.size||teile.length)&&!confirm('Warenkorb und Eingaben leeren?'))return;
-  ['kz','auto','kunde','tel','fin','jahr','motor','km','sprach','rabatt','stunden'].forEach(id=>{$(id).value=''});
+  if((korb.size||teile.length||fotos.length)&&!confirm('Warenkorb und Eingaben leeren?'))return;
+  ['kz',...FZ,'km','sprach','rabatt','stunden'].forEach(id=>{$(id).value=''});
   $('erkannt').textContent='';
-  lastFill={auto:'',kunde:'',tel:'',fin:'',jahr:'',motor:''};
+  lastFill=FZ0();fotos.length=0;fotosRender();$('scanst').textContent='';document.querySelectorAll('.scan').forEach(e=>e.classList.remove('scan'));
   korb.clear();teile.length=0;['tn','tp'].forEach(id=>{$(id).value=''});$('tq').value='1';rechne();alles();
 }
 function markiereSicherung(){db.sicherung=heuteIso();persist();renderKd()}
 async function sichern(){
-  const daten=JSON.stringify(db,null,1),name='mamo-kunden-'+heuteIso()+'.json';
+  const ex=Object.assign({},db,{fotos:{}});
+  try{const ids=[];Object.values(db.autos).forEach(a=>(a.besuche||[]).forEach(b=>(b.fotos||[]).forEach(i=>ids.push(i))));
+    for(const id of ids){const u=await fotoGet(id);if(u)ex.fotos[id]=u}}catch(e){}
+  const daten=JSON.stringify(ex),name='mamo-kunden-'+heuteIso()+'.json';
   try{
     const f=new File([daten],name,{type:'application/json'});
     if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});markiereSicherung();toast('Sicherung geteilt');return}
@@ -787,13 +828,12 @@ $('lade').addEventListener('change',e=>{
       Object.entries(x.autos).forEach(([k,a])=>{
         if(!a||!Array.isArray(a.besuche))return;
         let z=db.autos[k];
-        if(!z){z=db.autos[k]={kz:String(a.kz||k),auto:String(a.auto||''),kunde:String(a.kunde||''),tel:String(a.tel||''),fin:String(a.fin||''),jahr:String(a.jahr||''),motor:String(a.motor||''),besuche:[]};neuA++}
-        if(!z.auto)z.auto=String(a.auto||'');
-        if(!z.kunde)z.kunde=String(a.kunde||'');
-        if(!z.tel&&a.tel)z.tel=String(a.tel);if(!z.fin&&a.fin)z.fin=String(a.fin);if(!z.jahr&&a.jahr)z.jahr=String(a.jahr);if(!z.motor&&a.motor)z.motor=String(a.motor);
+        if(!z){z=db.autos[k]=Object.assign({kz:String(a.kz||k),besuche:[]},FZ0());neuA++}
+        FZ.forEach(f=>{if(!z[f]&&a[f])z[f]=String(a[f])});
         a.besuche.forEach(b=>{if(b&&typeof b.d==='string'&&!z.besuche.some(o=>o.d===b.d&&sigOf(o)===sigOf(b))){z.besuche.push(b);neuB++}});
       });
       if(x.satz>0&&!db.satz){db.satz=x.satz;$('satz').value=x.satz;rechne()}
+      if(x.fotos&&typeof x.fotos==='object')Object.entries(x.fotos).forEach(([id,u])=>{if(typeof u==='string'&&u.indexOf('data:image/')===0)fotoPut(id,u)});
       persist();alles();
       toast(neuA+' Fahrzeuge und '+neuB+' Besuche geladen');
     }catch(err){toast('Die Datei konnte nicht gelesen werden')}
@@ -814,19 +854,20 @@ $('kdliste').addEventListener('click',e=>{
 $('hist').addEventListener('click',e=>{
   const key=nk($('kz').value),a=db.autos[key];if(!a)return;
   const vb=e.target.closest('[data-v]');
-  if(vb){const bb=sortBesuche(a)[Number(vb.closest('.hv').dataset.i)];if(bb)zeigeAuftrag(ausBesuch(bb,a));return}
+  if(vb){const bb=sortBesuche(a)[Number(vb.closest('.hv').dataset.i)];if(bb)ausBesuchA(bb,a).then(zeigeAuftrag);return}
   if(e.target.closest('[data-x]')){
     const bb=sortBesuche(a)[Number(e.target.closest('.hv').dataset.i)];if(!bb)return;const d=bb.d;
-    if(confirm('Besuch vom '+dDe(d)+' löschen?')){a.besuche=a.besuche.filter(o=>o!==bb);persist();alles()}
+    if(confirm('Besuch vom '+dDe(d)+' löschen?')){(bb.fotos||[]).forEach(fotoDel);a.besuche=a.besuche.filter(o=>o!==bb);persist();alles()}
     return;
   }
-  if(e.target.closest('[data-del]')&&confirm('Fahrzeug '+a.kz+' mit allen Besuchen löschen?')){delete db.autos[key];persist();alles()}
+  if(e.target.closest('[data-del]')&&confirm('Fahrzeug '+a.kz+' mit allen Besuchen löschen?')){a.besuche.forEach(b=>(b.fotos||[]).forEach(fotoDel));delete db.autos[key];persist();alles()}
 });
 
 /* ---------- Teile, Auftrag / Kostenvoranschlag ---------- */
-const WERK={name:'MAMO KFZ-WERKSTATT',zeile:'Diagnose · Service',ort:'Unterammergau',mail:'Mamo.kfz.Werkstatt@gmail.com'};
+const WERK={name:'MAMO KFZ-WERKSTATT',zeile:'Diagnose · Service',ort:'Unterammergau',mail:'Mamo.kfz.Werkstatt@gmail.com',kontakt:'M. Dirki'};
+const LOGO=()=>{const i=document.querySelector('header img');return i?i.src:''};
 const finNorm=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-const infoZeile=a=>[a.jahr?'Bj. '+a.jahr:'',a.motor||'',a.tel?'Tel. '+a.tel:'',a.fin?'FIN '+a.fin:''].filter(Boolean).map(E).join(' · ');
+const infoZeile=a=>[a.jahr?(/\./.test(a.jahr)?'EZ ':'Bj. ')+a.jahr:'',a.kraftstoff||'',a.hubraum?a.hubraum+' cm³':'',a.kw?a.kw+' kW ('+Math.round(a.kw*1.35962)+' PS)':'',(a.hsn||a.tsn)?'HSN/TSN '+(a.hsn||'?')+'/'+(a.tsn||'?'):'',a.motor||'',a.tel?'Tel. '+a.tel:'',a.fin?'FIN '+a.fin:''].filter(Boolean).map(E).join(' · ');
 const WMI={WBA:'BMW',WBS:'BMW',WBY:'BMW',WMW:'MINI',WDB:'Mercedes-Benz',WDC:'Mercedes-Benz',WDD:'Mercedes-Benz',WDF:'Mercedes-Benz',W1K:'Mercedes-Benz',W1N:'Mercedes-Benz',W1V:'Mercedes-Benz',WVW:'Volkswagen',WVG:'Volkswagen',WV1:'Volkswagen',WV2:'Volkswagen',WAU:'Audi',WA1:'Audi',WP0:'Porsche',WP1:'Porsche',W0L:'Opel',W0V:'Opel',VF3:'Peugeot',VF7:'Citroën',VR1:'DS',VF1:'Renault',SAL:'Land Rover',SAJ:'Jaguar',WF0:'Ford',TMB:'Škoda',VSS:'SEAT',ZFA:'Fiat',ZAR:'Alfa Romeo',YV1:'Volvo',KMH:'Hyundai',KNA:'Kia',KND:'Kia',KNE:'Kia',JHM:'Honda',JMZ:'Mazda',JN1:'Nissan',UU1:'Dacia',XP7:'Tesla','5YJ':'Tesla'};
 function jahrAusFin(f){
   const c=f.charAt(9),L='ABCDEFGHJKLMNPRSTVWXY';
@@ -857,13 +898,24 @@ function berechne(o){
 function aktuell(){
   const kmv=parseInt(String($('km').value).replace(/\D/g,''),10);
   return {d:$('datum').value||heuteIso(),kz:kzText(),auto:$('auto').value.trim(),kunde:$('kunde').value.trim(),
-    tel:$('tel').value.trim(),fin:finNorm($('fin').value),jahr:$('jahr').value.trim(),motor:$('motor').value.trim(),km:isNaN(kmv)?null:kmv,
+    tel:$('tel').value.trim(),fin:finNorm($('fin').value),jahr:$('jahr').value.trim(),motor:$('motor').value.trim(),hsn:$('hsn').value.trim().toUpperCase(),tsn:$('tsn').value.trim().toUpperCase(),hubraum:$('hubraum').value.trim(),kw:$('kw').value.trim(),kraftstoff:$('kraftstoff').value.trim(),fotos:fotos.map(f=>f.url),km:isNaN(kmv)?null:kmv,
     teile:teile.map(p=>({n:p.n,q:p.q,p:p.p})),arbeiten:[...korb].map(([n,q])=>({n:n,q:q,p:PREIS[n]})),
     stunden:zahl('stunden'),satz:zahl('satz'),rabatt:rabattProzent()};
 }
-function ausBesuch(b,a){
-  return {d:b.d,kz:a.kz,auto:a.auto,kunde:a.kunde,tel:a.tel,fin:a.fin,jahr:a.jahr,motor:a.motor,km:b.km,teile:b.teile||[],arbeiten:b.arbeiten||[],
-    stunden:b.stunden||0,satz:b.satz||0,rabatt:b.rabatt||0};
+function ausBesuch(b,a,urls){
+  const o={d:b.d,kz:a.kz,km:b.km,teile:b.teile||[],arbeiten:b.arbeiten||[],stunden:b.stunden||0,satz:b.satz||0,rabatt:b.rabatt||0,fotos:urls||[]};
+  FZ.forEach(k=>o[k]=a[k]||'');return o;
+}
+async function ausBesuchA(b,a){
+  const urls=[];for(const id of (b.fotos||[])){const u=await fotoGet(id);if(u)urls.push(u)}
+  return ausBesuch(b,a,urls);
+}
+function fzZeilen(o){
+  return [['Kennzeichen',o.kz,''],['Fahrzeug',o.auto,''],['Erstzulassung / Baujahr',o.jahr,''],['Kraftstoff',o.kraftstoff,''],
+    ['Hubraum',o.hubraum?o.hubraum+' cm³':'',''],['Leistung',o.kw?o.kw+' kW ('+Math.round(o.kw*1.35962)+' PS)':'',''],
+    ['HSN / TSN',(o.hsn||o.tsn)?(o.hsn||'–')+' / '+(o.tsn||'–'):'','mono'],['Motor / Zusatz',o.motor,''],
+    ['Kunde',o.kunde,''],['Telefon',o.tel,''],['Kilometerstand',o.km!=null&&!isNaN(o.km)?kmFmt(o.km):'',''],
+    ['Fahrgestellnummer (FIN)',o.fin,'wide mono']].filter(x=>x[1]);
 }
 function auftragHtml(o,typ){
   const b=berechne(o);
@@ -872,11 +924,11 @@ function auftragHtml(o,typ){
   const sr=(l,v,c)=>'<div'+(c?' class="'+c+'"':'')+'><span>'+l+'</span><span>'+v+'</span></div>';
   let h='<div class="ap"><div class="noprint seg">'
     +['Auftrag','Kostenvoranschlag'].map(x=>'<button type="button" data-typ="'+x+'"'+(x===typ?' class="on"':'')+'>'+x+'</button>').join('')+'</div>';
-  h+='<div class="apaper"><div class="ahead"><div><div class="awn">'+E(WERK.name)+'</div><div class="aws">'+E(WERK.zeile)+'</div></div>'
+  h+='<div class="apaper"><div class="alogoW"><img class="alogo" src="'+LOGO()+'" alt="MAMO KFZ-Werkstatt"></div>'
+    +'<div class="ahead"><div><div class="aco" style="margin-top:0">'+E(WERK.ort)+(WERK.mail?' · '+E(WERK.mail):'')+'</div>'
+    +'<div class="aco" style="margin-top:2px"><b>Ansprechpartner:</b> '+E(WERK.kontakt)+'</div></div>'
     +'<div class="aty"><b>'+E(typ)+'</b><span>'+E(dDe(o.d))+'</span></div></div>';
-  h+='<div class="aco">'+E(WERK.ort)+(WERK.mail?' · '+E(WERK.mail):'')+'</div>';
-  const f=[['Kennzeichen',o.kz,''],['Fahrzeug',o.auto,''],['Baujahr',o.jahr,''],['Motor / Kraftstoff',o.motor,''],['Kunde',o.kunde,''],['Telefon',o.tel,''],
-    ['Kilometerstand',o.km!=null&&!isNaN(o.km)?kmFmt(o.km):'',''],['Fahrgestellnummer (FIN)',o.fin,'wide mono']].filter(x=>x[1]);
+  const f=fzZeilen(o);
   if(f.length)h+='<div class="afz">'+f.map(x=>'<div'+(x[2]?' class="'+x[2]+'"':'')+'><small>'+x[0]+'</small>'+E(x[1])+'</div>').join('')+'</div>';
   if(hatT)h+='<div class="asec">Teile</div>'+o.teile.map(p=>zl(p.q,p.n,p.p)).join('');
   if(hatA)h+='<div class="asec">Arbeiten</div>'+(o.arbeiten||[]).map(w=>zl(w.q,w.n,w.p)).join('')
@@ -886,6 +938,7 @@ function auftragHtml(o,typ){
   if(hatT&&hatA)h+=sr('Teile',E(fmt(b.tz)))+sr('Arbeit',E(fmt(r2(b.a+b.zh))));
   if(o.rabatt>0)h+=sr('Zwischensumme',E(fmt(b.z)))+sr('Rabatt '+E(hFmt(o.rabatt))+' %','−'+E(fmt(b.rb)));
   h+=sr('Gesamt',E(fmt(b.g)),'tot')+'</div>';
+  if((o.fotos||[]).length)h+='<div class="asec">Fotos</div><div class="afotos">'+o.fotos.map(u=>'<img class="lbimg" src="'+u+'" alt="Foto">').join('')+'</div>';
   h+=typ==='Auftrag'
     ?'<div class="afoot">Ich beauftrage die oben genannten Arbeiten.</div><div class="asig">Unterschrift Kunde</div>'
     :'<div class="afoot">Unverbindlicher Kostenvoranschlag. Der Endpreis kann je nach tatsächlichem Aufwand abweichen.</div>';
@@ -896,15 +949,8 @@ function auftragHtml(o,typ){
 function auftragText(o,typ){
   const b=berechne(o),L=[];
   const zl=(q,n,p)=>(q>1?q+' × ':'')+n+(q>1?' (je '+fmt(p)+')':'')+': '+fmt(q*p);
-  L.push(WERK.name+' – '+typ,'Datum: '+dDe(o.d));
-  if(o.kz)L.push('Kennzeichen: '+o.kz);
-  if(o.auto)L.push('Fahrzeug: '+o.auto);
-  if(o.jahr)L.push('Baujahr: '+o.jahr);
-  if(o.motor)L.push('Motor: '+o.motor);
-  if(o.fin)L.push('FIN: '+o.fin);
-  if(o.kunde)L.push('Kunde: '+o.kunde);
-  if(o.tel)L.push('Telefon: '+o.tel);
-  if(o.km!=null&&!isNaN(o.km))L.push('Kilometerstand: '+kmFmt(o.km));
+  L.push(WERK.name+' – '+typ,'Datum: '+dDe(o.d),'Ansprechpartner: '+WERK.kontakt);
+  fzZeilen(o).forEach(([l,v])=>L.push(l+': '+v));
   if((o.teile||[]).length){L.push('','Teile:');o.teile.forEach(p=>L.push(zl(p.q,p.n,p.p)))}
   if((o.arbeiten||[]).length||o.stunden>0){
     L.push('','Arbeiten:');
@@ -924,8 +970,15 @@ function zeigeAuftragAktuell(){
   zeigeAuftrag(o);
 }
 async function teileAuftrag(){
-  const txt=auftragText(aObj,aTyp);
-  try{if(navigator.share){await navigator.share({title:aTyp+(aObj.kz?' '+aObj.kz:''),text:txt});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const txt=auftragText(aObj,aTyp),titel=aTyp+(aObj.kz?' '+aObj.kz:'');
+  try{if(navigator.share){
+    let files=[];
+    if((aObj.fotos||[]).length&&navigator.canShare){
+      try{files=await Promise.all(aObj.fotos.map(async(u,i)=>new File([await (await fetch(u)).blob()],'foto-'+(i+1)+'.jpg',{type:'image/jpeg'})));
+        if(!navigator.canShare({files}))files=[]}catch(e){files=[]}
+    }
+    await navigator.share(files.length?{title:titel,text:txt,files}:{title:titel,text:txt});return}}
+  catch(e){if(e&&e.name==='AbortError')return}
   try{await navigator.clipboard.writeText(txt);toast('Text kopiert')}catch(e){prompt('Text kopieren:',txt)}
 }
 function druckeAuftrag(){try{window.print()}catch(e){toast('Drucken geht hier nicht. Nutze Teilen.')}}
@@ -935,6 +988,248 @@ $('auftrag').addEventListener('click',e=>{
   if(ac.dataset.act==='zu')document.body.classList.remove('zeigeA');
   else if(ac.dataset.act==='teilen')teileAuftrag();
   else if(ac.dataset.act==='druck')druckeAuftrag();
+});
+
+/* ---------- Fahrzeugschein: Foto -> Felder ---------- */
+/* ---------- Fahrzeugschein auslesen (Auswertung des erkannten Textes) ---------- */
+const FS_UPPER=['BMW','VW','SEAT','KIA','MG','DS','BYD','GWM','MAN'];
+function fsNice(s,modell){
+  return String(s||'').trim().split(/(\s+|-)/).map(w=>{
+    if(!w||/^(\s+|-)$/.test(w))return w;
+    const u=w.toUpperCase();
+    if(!modell&&FS_UPPER.includes(u))return u;
+    if(/^\d+[A-Z]{1,3}$/.test(u))return u.replace(/^(\d+)([A-Z]+)$/,(m,a,b)=>a+b.toLowerCase());
+    if(/^[A-ZÄÖÜ]+$/.test(u)&&u.length>3)return u.charAt(0)+u.slice(1).toLowerCase();
+    return u;
+  }).join('');
+}
+function fsZahl(s,min,max){
+  const m=String(s||'').match(/\d[\d.]*/g);if(!m)return '';
+  for(const x of m){const n=parseInt(x.replace(/\./g,''),10);if(n>=min&&n<=max)return String(n)}
+  return '';
+}
+function fsFin(lines,labelIdx){
+  const best={s:-1,v:''};const near=[];
+  lines.forEach((ln,i)=>{
+    const toks=ln.toUpperCase().split(/\s+/).map(t=>t.replace(/[^A-Z0-9]/g,'')).filter(Boolean);
+    const cands=[];
+    for(let a=0;a<toks.length;a++){let t='';for(let b=a;b<Math.min(a+3,toks.length);b++){t+=toks[b];cands.push(t);if(t.length>18)break}}
+    cands.forEach(t=>{
+      t=t.replace(/[OQ]/g,'0').replace(/I/g,'1');
+      const opts=[];
+      if(t.length===17)opts.push(t);
+      if(t.length===18)opts.push(t.slice(1));
+      opts.forEach(v=>{
+        if(!/^[A-HJ-NPR-Z0-9]{17}$/.test(v))return;
+        const dig=(v.match(/\d/g)||[]).length;if(dig<4||dig>15)return;
+        let s=dig>=6?1:0;
+        if(typeof WMI!=='undefined'&&(WMI[v.slice(0,3)]||v.slice(0,2)==='JT'))s+=3;
+        if(labelIdx>=0&&i>=labelIdx&&i<=labelIdx+2)s+=3;
+        if(s>best.s){best.s=s;best.v=v}
+      });
+    });
+  });
+  return best.v;
+}
+function parseSchein(text){
+  const lines=String(text||'').split(/\r?\n/).map(s=>s.replace(/[|_~]/g,' ').replace(/\s+/g,' ').replace(/^[^A-Za-z0-9ÄÖÜäöü(]+/,'').trim()).filter(Boolean);
+  const out={};
+  const up=lines.map(l=>l.toUpperCase());
+  const idx=re=>up.findIndex(l=>re.test(l));
+  /* Text hinter dem Feldnamen: erst Rest der Zeile, dann die nächsten Zeilen */
+  const CODE=/^\W*\(?[A-Z]{1,2}[.,]?\d{0,2}\)?(?=\s|$)/i;
+  const nach=(wortRe,codeRe)=>{
+    let i=idx(wortRe);if(i<0&&codeRe)i=idx(codeRe);if(i<0)return [];
+    const same=lines[i].replace(new RegExp(wortRe.source,'ig'),' ').replace(CODE,' ').replace(/\s+/g,' ').trim();
+    return [same,lines[i+1]||'',lines[i+2]||''].filter(Boolean);
+  };
+  const codeStart=/^\W*\(?(?:[A-Z]\.\d{1,2}(?:\.\d)?|\d{1,2}\.\d)\)?(?:\s|$)/;
+  const wert=l=>{const x=l.replace(/^[\s:.,;=\-–]+/,'').trim();return codeStart.test(x)?'':x};
+
+  /* Kennzeichen */
+  const PL=/\b([A-ZÄÖÜ]{1,3})[-–·.\s]{1,2}([A-Z]{1,2})\s?([1-9]\d{0,3})\s?([EH])?\b/;
+  const plate=l=>{const m=l.toUpperCase().match(PL);return m?m[1]+'-'+m[2]+' '+m[3]+(m[4]||''):''};
+  {let kz='';const i=idx(/KENNZEICHEN/);
+   if(i>=0)for(const l of [lines[i].replace(/.*KENNZEICHEN/i,''),lines[i+1],lines[i+2]]){if(l&&!kz)kz=plate(l)}
+   if(!kz)for(const l of lines.slice(0,14)){if(!kz&&!/BMW|KW|CM/.test(l.toUpperCase()))kz=plate(l)}
+   if(kz)out.kz=kz;}
+
+  /* Erstzulassung */
+  {const D=/\b(\d{2})[.,](\d{2})[.,]((?:19|20)\d{2})\b/;let m=null;
+   const i=idx(/ERSTZULASSUNG/);
+   if(i>=0)for(const l of [lines[i],lines[i+1],lines[i+2]]){if(l&&!m)m=l.match(D)}
+   if(!m)for(const l of lines){if(!m)m=l.match(D)}
+   if(m){out.ez=m[1]+'.'+m[2]+'.'+m[3];out.jahr=m[3]}}
+
+  /* HSN / TSN */
+  {let hsn='',tsn='';const i=idx(/SCHL[ÜU]SSELNUMMER|\b2\.1\b|\b2\.2\b/);
+   const scan=l=>{const m=String(l||'').toUpperCase().match(/\b(\d{4})\b[\s\/]*(?:2[.,]2)?[\s\/]*\b([A-Z0-9]{3})\b/);if(m&&!hsn){hsn=m[1];tsn=m[2]}};
+   if(i>=0)[lines[i],lines[i+1],lines[i+2]].forEach(scan);
+   if(!hsn)lines.forEach(l=>{if(!hsn&&/^\d{4}\s*[\/ ]\s*[A-Z0-9]{3}$/i.test(l.trim()))scan(l)});
+   if(hsn){out.hsn=hsn;out.tsn=tsn.replace(/0(?=[A-Z])/g,'O')}}
+
+  /* Marke und Modell */
+  {const a=nach(/\bMARKE\b/,/^\W*\(?D[.,]?1\)?\s/).map(wert).filter(Boolean);
+   let marke=(a[0]||'').toUpperCase().replace(/[^A-ZÄÖÜ0-9 \-]/g,'').trim();
+   let bi=-1;
+   if(!marke&&typeof MARKEN!=='undefined'){
+     up.some((l,i)=>{const f=l.split(/[\s,.;]+/).find(x=>MARKEN.includes(x.toLowerCase())&&x.length>2);if(f){marke=f;bi=i;return true}return false})}
+   if(marke)out.marke=fsNice(marke,false);
+   const b=nach(/HANDELSBEZEICHNUNG/,/^\W*\(?D[.,]?3\)?\s/).map(wert).filter(Boolean);
+   const mo=(b[0]||'').toUpperCase().replace(/[^A-ZÄÖÜ0-9 \-\/]/g,'').trim();
+   if(mo)out.modell=fsNice(mo,true);
+   else if(bi>=0){const c=(up[bi+2]||'').replace(/[^A-ZÄÖÜ0-9 \-]/g,'').trim();
+     if(/^[A-Z0-9][A-Z0-9 \-]{1,20}$/.test(c)&&!/^\d{2}\s?\d{2}/.test(c)&&c.length<=20&&!/^[A-HJ-NPR-Z0-9]{17}$/.test(c))out.modell=fsNice(c,true)}}
+
+  /* FIN */
+  {const li=idx(/IDENTIFIZIERUNGSNUMMER|FAHRGESTELL/);const f=fsFin(lines,li);if(f)out.fin=f;}
+
+  /* Hubraum / Leistung / Kraftstoff */
+  {const h=nach(/HUBRAUM/,/^\W*\(?P[.,]?1\)?\s/).map(l=>l.replace(/\bin\s*cm\W{0,2}/i,''));
+   let hv=fsZahl(h.join(' '),400,9999);
+   if(!hv){const l=lines.find(x=>/^\d{3,4}$/.test(x)&&+x>=600);if(l)hv=l}
+   if(hv)out.hubraum=hv;
+   const k=nach(/NENNLEISTUNG/,/^\W*\(?P[.,]?2\)?\s/).map(l=>l.replace(/\bin\s*k?w\b/i,'')).join(' ');
+   let kv=fsZahl(k,10,999);
+   if(!kv&&hv){const j=lines.findIndex(x=>x===hv);const n=lines[j+1]||'';if(/^\d{2,3}$/.test(n)&&+n>=20)kv=n}
+   if(kv)out.kw=kv;
+   const kr=up.join(' ').match(/\b(DIESEL|BENZIN|ELEKTRO|STROM|HYBRID|ERDGAS|AUTOGAS|FL[ÜU]SSIGGAS|WASSERSTOFF|OTTO|SUPER)\b/);
+   if(kr){const t=kr[1];out.kraftstoff=t==='SUPER'||t==='OTTO'?'Benzin':t==='STROM'?'Elektro':t.charAt(0)+t.slice(1).toLowerCase().replace('ü','ü')}}
+  return out;
+}
+
+const TESS_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let tessP=null;
+function ladeTesseract(){
+  if(window.Tesseract)return Promise.resolve();
+  if(tessP)return tessP;
+  tessP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=TESS_URL;sc.onload=res;sc.onerror=()=>{tessP=null;rej(new Error('laden'))};document.head.appendChild(sc)});
+  return tessP;
+}
+function bildLaden(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im)};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('bild'))};im.src=u})}
+async function scanBild(file){
+  const im=await bildLaden(file),w=im.naturalWidth,h=im.naturalHeight,lg=Math.max(w,h);
+  const sc=lg>2400?2400/lg:(lg<1600?1600/lg:1);
+  const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);
+  const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);
+  const d=x.getImageData(0,0,c.width,c.height),p=d.data,hist=new Uint32Array(256);
+  for(let i=0;i<p.length;i+=4){const g=(p[i]*299+p[i+1]*587+p[i+2]*114)/1000|0;p[i]=p[i+1]=p[i+2]=g;hist[g]++}
+  const n=c.width*c.height;let a=0,lo=0,hi=255;
+  for(let g=0;g<256;g++){a+=hist[g];if(a>=n*0.01){lo=g;break}}
+  a=0;for(let g=255;g>=0;g--){a+=hist[g];if(a>=n*0.01){hi=g;break}}
+  const k=hi>lo+20?255/(hi-lo):1;
+  for(let i=0;i<p.length;i+=4){const v=Math.max(0,Math.min(255,(p[i]-lo)*k));p[i]=p[i+1]=p[i+2]=v}
+  x.putImageData(d,0,0);return c;
+}
+function dreheBild(c,deg){const o=document.createElement('canvas');o.width=c.height;o.height=c.width;const x=o.getContext('2d');x.translate(o.width/2,o.height/2);x.rotate(deg*Math.PI/180);x.drawImage(c,-c.width/2,-c.height/2);return o}
+const scanScore=r=>['kz','marke','modell','ez','fin','hsn','hubraum','kw','kraftstoff'].filter(k=>r[k]).length;
+let scanLaeuft=false;
+async function scanStart(file){
+  if(!file||scanLaeuft)return;
+  scanLaeuft=true;
+  const st=$('scanst'),btn=$('scanbtn');btn.disabled=true;
+  let worker=null;
+  try{
+    st.textContent='Texterkennung wird geladen … (beim ersten Mal ca. 10–20 MB, dafür Internet nötig)';
+    await ladeTesseract();
+    let phase='';
+    worker=await Tesseract.createWorker('deu',1,{logger:m=>{
+      if(m.status==='recognizing text')st.textContent='Fahrzeugschein wird gelesen … '+Math.round((m.progress||0)*100)+' %'+phase;
+      else if(m.status&&/load|init/.test(m.status))st.textContent='Texterkennung wird vorbereitet … '+(m.progress?Math.round(m.progress*100)+' %':'');
+    }});
+    const base=await scanBild(file);
+    const versuche=[[base,'6'],[base,'4'],[dreheBild(base,90),'6'],[dreheBild(base,270),'6']];
+    const res={},fins=[];
+    for(let n=0;n<versuche.length;n++){
+      if(n>0){
+        const gut=scanScore(res)>=7&&res.fin&&res.fin.length===17&&typeof WMI!=='undefined'&&WMI[res.fin.slice(0,3)];
+        if(n===1&&gut)break;
+        if(n>=2&&scanScore(res)>=4)break;
+      }
+      phase=n>0?' (Versuch '+(n+1)+')':'';
+      await worker.setParameters({tessedit_pageseg_mode:versuche[n][1]});
+      const r=await worker.recognize(versuche[n][0]);
+      const p=parseSchein(r.data.text);
+      if(p.fin)fins.push(p.fin);
+      Object.keys(p).forEach(k=>{if(!res[k])res[k]=p[k]});
+    }
+    const finAbw=[...new Set(fins)].length>1;
+    scanUebernehmen(res,finAbw);
+  }catch(err){
+    st.textContent=(err&&err.message==='laden')
+      ?'Die Texterkennung konnte nicht geladen werden. Beim ersten Mal braucht das Handy Internet. Bitte Verbindung prüfen und nochmal versuchen.'
+      :'Das Foto konnte nicht gelesen werden. Bitte nochmal probieren.';
+  }finally{
+    try{if(worker)await worker.terminate()}catch(e){}
+    scanLaeuft=false;btn.disabled=false;
+  }
+}
+function scanUebernehmen(res,finAbw){
+  const st=$('scanst');
+  if(scanScore(res)<2){
+    st.textContent='Ich konnte kaum etwas lesen. Tipps: Fahrzeugschein flach hinlegen, Handy quer halten, nah ran (Schein füllt das Bild), gutes Licht, keine Spiegelung.';
+    return;
+  }
+  const set=(id,v)=>{if(v){$(id).value=v;$(id).classList.add('scan')}};
+  set('kz',res.kz);
+  set('auto',[res.marke,res.modell].filter(Boolean).join(' '));
+  set('jahr',res.ez||res.jahr);set('fin',res.fin);set('hsn',res.hsn);set('tsn',res.tsn);
+  set('hubraum',res.hubraum);set('kw',res.kw);set('kraftstoff',res.kraftstoff);
+  kzSuche();kmPruefen();
+  const fehlt=[['kz','Kennzeichen'],['marke','Marke'],['modell','Modell'],['ez','Erstzulassung'],['fin','FIN'],['hsn','HSN/TSN'],['hubraum','Hubraum'],['kw','Leistung'],['kraftstoff','Kraftstoff']].filter(x=>!res[x[0]]).map(x=>x[1]);
+  let t='Fertig. Gelb markierte Felder stammen aus dem Foto. Bitte kurz prüfen, besonders die FIN.';
+  if(res.fin&&res.fin.length!==17)t+='\nFIN hat '+res.fin.length+' statt 17 Zeichen.';
+  if(finAbw)t+='\nAchtung: Die FIN wurde beim Lesen nicht eindeutig erkannt, bitte genau vergleichen.';
+  if(fehlt.length)t+='\nNicht gefunden: '+fehlt.join(', ')+' (bitte von Hand ergänzen).';
+  t+='\nJetzt nur noch Name und Kilometerstand eintragen.';
+  st.textContent=t;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$('scanbtn').addEventListener('click',()=>$('scanfile').click());
+$('scangal').addEventListener('click',()=>$('scanfile2').click());
+['scanfile','scanfile2'].forEach(id=>$(id).addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';scanStart(f)}));
+document.querySelectorAll('.panel input').forEach(i=>i.addEventListener('input',()=>i.classList.remove('scan')));
+
+/* ---------- Fotos zum Auftrag (IndexedDB) ---------- */
+let idbP=null;
+function idb(){
+  if(idbP)return idbP;
+  idbP=new Promise((res,rej)=>{try{const r=indexedDB.open('mamo_fotos',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});
+  return idbP;
+}
+const idbDo=(mode,fn)=>idb().then(d=>new Promise((res,rej)=>{const t=d.transaction('f',mode),rq=fn(t.objectStore('f'));t.oncomplete=()=>res(rq&&rq.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)}));
+let fotoFehler=false;
+const fotoPut=(id,url)=>idbDo('readwrite',s=>s.put(url,id)).catch(()=>{if(!fotoFehler){fotoFehler=true;toast('Fotos konnten nicht dauerhaft gespeichert werden')}});
+const fotoGet=id=>idbDo('readonly',s=>s.get(id)).catch(()=>null);
+const fotoDel=id=>idbDo('readwrite',s=>s.delete(id)).catch(()=>{});
+const fotos=[];
+async function fotoKomprimieren(file){
+  const im=await bildLaden(file),sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight));
+  const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.72);
+}
+function fotosRender(){
+  $('fotoliste').innerHTML=fotos.map((f,i)=>'<div class="fth"><img class="lbimg" src="'+f.url+'" alt="Foto"><button type="button" data-fd="'+i+'" aria-label="Foto entfernen">✕</button></div>').join('');
+  $('fotoanz').textContent=fotos.length?fotos.length+(fotos.length===1?' Foto':' Fotos'):'';
+}
+$('fotobtn').addEventListener('click',()=>$('fotofile').click());
+$('fotofile').addEventListener('change',async e=>{
+  const fl=[...(e.target.files||[])];e.target.value='';
+  for(const f of fl){
+    if(fotos.length>=12){toast('Maximal 12 Fotos pro Auftrag');break}
+    try{fotos.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,8),url:await fotoKomprimieren(f)})}catch(err){toast('Ein Foto konnte nicht gelesen werden')}
+  }
+  fotosRender();
+});
+$('fotoliste').addEventListener('click',e=>{
+  const b=e.target.closest('[data-fd]');if(!b)return;
+  fotos.splice(Number(b.dataset.fd),1);fotosRender();
+});
+document.addEventListener('click',e=>{
+  const im=e.target.closest&&e.target.closest('img.lbimg');
+  if(im){$('lb').innerHTML='<img src="'+im.src+'" alt="Foto">';$('lb').classList.add('on');return}
+  if(e.target.closest&&e.target.closest('#lb'))$('lb').classList.remove('on');
 });
 
 ladeDb();if(db.satz>0)$('satz').value=db.satz;rechne();alles();
