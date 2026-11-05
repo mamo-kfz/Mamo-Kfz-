@@ -40,6 +40,13 @@ input[type=text],input[type=date],input[type=time],input[type=number]{
  width:100%;min-width:0;height:48px;padding:0 14px;font-size:16px;color:var(--text);
  background:#0f1113;border:1px solid var(--line);border-radius:12px;outline:none;
  -webkit-appearance:none;appearance:none;font-family:inherit}
+select{width:100%;min-width:0;height:48px;padding:0 12px;font-size:16px;color:var(--text);background:#0f1113;border:1px solid var(--line);border-radius:12px;outline:none;font-family:inherit}
+select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(216,38,43,.18)}
+html[data-theme=light] select{background:#fff}
+#sfbar{position:fixed;left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:65;display:none;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#1b1c1e;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:13.5px}
+#sfbar.on{display:flex}#sfbar span{flex:1}
+#sfbar button{border:0;border-radius:10px;padding:10px 12px;font-weight:700;font-size:13px;background:#d8262b;color:#fff}
+#sfbar button.x{background:transparent;color:#aaa;padding:10px 6px}
 input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(216,38,43,.18)}
 input::placeholder{color:#5b6068}
 input[type=date],input[type=time]{text-align:left;color-scheme:dark;display:block;max-width:100%}
@@ -323,15 +330,15 @@ button{border-radius:16px;background:linear-gradient(180deg,#d12d34,#a81c22);box
    <label class="field"><span>Marke &amp; Modell</span><input id="auto" type="text" placeholder="z.B. BMW 320d (F30)" autocomplete="off"></label>
    <div class="row">
     <label class="field"><span>Erstzulassung / Baujahr</span><input id="jahr" type="text" placeholder="z.B. 14.03.2016" autocomplete="off"></label>
-    <label class="field"><span>Kraftstoff</span><input id="kraftstoff" type="text" placeholder="z.B. Diesel" autocomplete="off"></label>
+    <label class="field"><span>Kraftstoff</span><select id="kraftstoff"></select></label>
    </div>
    <div class="row">
-    <label class="field"><span>Hubraum (cm³)</span><input id="hubraum" type="text" inputmode="numeric" placeholder="z.B. 1995" autocomplete="off"></label>
+    <label class="field"><span>Hubraum (cm³)</span><select id="hubraum"></select></label>
     <label class="field"><span>Leistung (kW)</span><input id="kw" type="text" inputmode="numeric" placeholder="z.B. 135" autocomplete="off"></label>
    </div>
    <div class="row">
-    <label class="field"><span>HSN (zu 2.1)</span><input id="hsn" type="text" placeholder="4 Zeichen" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
-    <label class="field"><span>TSN (zu 2.2)</span><input id="tsn" type="text" placeholder="3 Zeichen" maxlength="3" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+    <label class="field"><span>HSN (zu 2.1)</span><input id="hsn" type="text" placeholder="4 Ziffern" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+    <label class="field"><span>TSN (zu 2.2)</span><input id="tsn" type="text" placeholder="3 Buchstaben" maxlength="3" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
    </div>
    <label class="field"><span>Motor / Motorcode (optional)</span><input id="motor" type="text" placeholder="z.B. N47 2.0 Diesel" autocomplete="off"></label>
    <div class="row">
@@ -1721,15 +1728,16 @@ function pHome(){
    +row('scan','Fahrzeugschein fotografieren','Kamera öffnen und Daten automatisch einlesen')
    +row('scangal','Foto aus Galerie wählen','Fahrzeugschein aus den Fotos einlesen')
    +'<div class="mmt">Ansehen</div>'
-   +row('auf','Aufträge ansehen',nA+(nA===1?' Auftrag':' Aufträge')+' gespeichert')
-   +row('kd','Kunden ansehen',nF+(nF===1?' Fahrzeug':' Fahrzeuge')+' · anrufen, WhatsApp, neuer Auftrag')
-   +row('zahl','Zahlungen',vs.length?fmt(sum)+' offen bei '+vs.length+(vs.length===1?' Auftrag':' Aufträgen'):'Alles bezahlt',vs.length||'')
+   +row('kd','1. Kunden ansehen',nF+(nF===1?' Fahrzeug':' Fahrzeuge')+' · anrufen, WhatsApp, neuer Auftrag')
+   +row('auf','2. Aufträge ansehen',nA+(nA===1?' Auftrag':' Aufträge')+' gespeichert')
+   +row('zahl','3. Zahlungen ansehen',(vs.length?fmt(sum)+' offen bei '+vs.length+(vs.length===1?' Auftrag':' Aufträgen'):'Alles bezahlt')+' · '+fmt(paidSum())+' bezahlt',vs.length||'')
    +'<div class="mmt">Termin</div>'
-   +row('ics','Termin als Kalenderdatei (.ics)','Für Apple Kalender oder zum Teilen')
+   +row('gcal','Termin in Google Kalender eintragen','Mit Kosten und Leistungen aus dem aktuellen Auftrag')
+   +row('ics','Termin als Kalenderdatei (.ics)','Nur für Apple Kalender')
    +'<div class="mmt">Daten</div>'
    +row('sichern','Sicherung speichern',bk.txt+(bk.warn?' – bitte sichern':''),'',bk.warn)
    +row('laden','Sicherung laden','Gespeicherte Datei wieder einlesen (nichts geht doppelt rein)')
-   +row('set','Einstellungen','Hell/Dunkel, MwSt., Preise, Gelöschtes wiederherstellen');
+   +row('set','Einstellungen','Ordner, Hell/Dunkel, MwSt., Preise, Gelöschtes wiederherstellen');
 }
 function pSet(){
   var e=db.einst,c=mw(),un=snaps().length;
@@ -1739,7 +1747,7 @@ function pSet(){
    +sg('mwst',e.mwst,[['aus','Keine MwSt.'],['inkl','Preise inkl. MwSt.'],['plus','MwSt. aufschlagen']])
    +'<div class="mmc"><div class="mmline"><label for="mmsatz">Steuersatz</label><input type="text" inputmode="decimal" id="mmsatz" data-set="satz" value="'+E(String(c.s).replace('.',','))+'"><span class="eu">%</span></div>'
    +(e.mwst==='aus'?'<label class="mmcb"><input type="checkbox" data-set="klein"'+(e.klein?' checked':'')+'><span>Hinweis „Kein Umsatzsteuerausweis gemäß § 19 UStG“ auf Auftrag und Kostenvoranschlag drucken</span></label>':'')+'</div>'
-   +'<p class="mmnote">Solange du kein Gewerbe hast, lass „Keine MwSt.“ an. Ältere Aufträge behalten die Einstellung, mit der sie gespeichert wurden. Das hier ersetzt keine Steuerberatung.</p>'
+   +'<p class="mmnote">Solange du kein Gewerbe hast, lass „Keine MwSt.“ an. Die Einstellung gilt für alle Aufträge, auch für ältere. Das hier ersetzt keine Steuerberatung.</p>'
    +'<div class="mmt">Leistungen</div>'
    +row('preise','Preise anpassen','Preise ändern und eigene Leistungen anlegen')
    +'<div class="mmt">Daten</div>'
@@ -1844,7 +1852,7 @@ function pUndo(){
 }
 
 /* ===== Update 2: Ordner Kunden / Aufträge / Zahlungen ===== */
-const FK=[['kz','Kennzeichen *','GAP-MA 123'],['kunde','Kundenname','Name'],['tel','Handynummer','0170 1234567'],['auto','Marke & Modell','BMW 320d'],['jahr','Erstzulassung / Baujahr','14.03.2016'],['kraftstoff','Kraftstoff','Diesel'],['hubraum','Hubraum (cm³)','1995'],['kw','Leistung (kW)','135'],['hsn','HSN','4 Zeichen'],['tsn','TSN','3 Zeichen'],['motor','Motor / Motorcode',''],['fin','Fahrgestellnummer (FIN)','17 Zeichen']];
+const FK=[['kz','Kennzeichen *','GAP-MA 123'],['kunde','Kundenname','Name'],['tel','Handynummer','0170 1234567'],['auto','Marke & Modell','BMW 320d'],['jahr','Erstzulassung / Baujahr','14.03.2016'],['kraftstoff','Kraftstoff','Diesel'],['hubraum','Hubraum (cm³)','1995'],['kw','Leistung (kW)','135'],['hsn','HSN','4 Ziffern'],['tsn','TSN','3 Buchstaben'],['motor','Motor / Motorcode',''],['fin','Fahrgestellnummer (FIN)','17 Zeichen']];
 let AE=null,W=null;
 const lbl=t=>'<div class="fl">'+t+'</div>';
 const hdr2=(t,to)=>hdr(t,true).replace('data-act="home"','data-act="'+to+'"');
@@ -1852,15 +1860,17 @@ const kTools=()=>'<div class="mmbt" style="margin:0 0 12px"><button type="button
 function ordner(){
   const nK=Object.keys(db.autos).length,vs=visits(),nF=vs.filter(v=>v.b.fertig).length,op=offene();
   return '<div class="mmt">Ordner</div>'
-   +row('kd','Kunden',nK+(nK===1?' Kunde / Fahrzeug':' Kunden / Fahrzeuge')+' · neu anlegen, bearbeiten, Datei laden')
-   +row('auf','Aufträge',(vs.length-nF)+' in Arbeit · '+nF+' fertig · Kosten und Teile bearbeiten')
-   +row('zahl','Zahlungen',op.length?op.length+(op.length===1?' Rechnung':' Rechnungen')+' offen · '+fmt(r2(op.reduce((x,v)=>x+v.s.rest,0))):'Rechnungen und Zahlstatus',op.length||'');
+   +row('kd','1. Kunden ansehen',nK+(nK===1?' Kunde / Fahrzeug':' Kunden / Fahrzeuge')+' · neu anlegen, bearbeiten, Datei laden')
+   +row('auf','2. Aufträge ansehen',(vs.length-nF)+' in Arbeit · '+nF+' fertig · Kosten und Teile bearbeiten')
+   +row('zahl','3. Zahlungen ansehen',(op.length?fmt(r2(op.reduce((x,v)=>x+v.s.rest,0)))+' offen':'Nichts offen')+' · '+fmt(paidSum())+' bezahlt',op.length||'')
+   +row('gcal','Termin in Google Kalender eintragen','Mit Kosten aus dem aktuellen Auftrag')
+   +row('sfopen','Speichern in Dateien: „1Mamo KFZ Kunden“',sfStatus());
 }
 /* ---- Kunden ---- */
 function pKForm(){
   const a=P.ke?db.autos[P.ke]:{};
   return hdr2(P.ke?'Kunde bearbeiten':'Neuer Kunde','kd')+'<div class="mmc mmform">'
-   +FK.map(f=>lbl(f[1])+'<input type="text" id="kf_'+f[0]+'" placeholder="'+f[2]+'" autocomplete="off" value="'+E(a[f[0]]||'')+'">').join('')
+   +FK.map(f=>lbl(f[1])+(f[0]==='kraftstoff'?selHtml('kf_kraftstoff',KRAFT,a.kraftstoff):f[0]==='hubraum'?selHtml('kf_hubraum',HUB,a.hubraum,1):'<input type="text" id="kf_'+f[0]+'" placeholder="'+f[2]+'" autocomplete="off"'+(f[0]==='hsn'?' maxlength="4" inputmode="numeric"':f[0]==='tsn'?' maxlength="3" autocapitalize="characters"':'')+' value="'+E(a[f[0]]||'')+'">')).join('')
    +'<button type="button" class="sb pri" data-act="ksave" style="width:100%;text-align:center;margin-top:6px">Speichern</button>'
    +(P.ke?'<button type="button" class="sb" data-act="kdel" style="width:100%;text-align:center;margin-top:8px;color:var(--red2)">Kunde / Fahrzeug löschen</button>':'')+'</div>';
 }
@@ -1945,9 +1955,14 @@ function pZahl(){
   P.zf=P.zf||'alle';
   const L=visits().filter(v=>v.b.fertig).map(v=>{v.s=stat(v);return v});
   L.sort((x,y)=>String(y.b.fd||y.b.d).localeCompare(String(x.b.fd||x.b.d))||(y.b.ts||0)-(x.b.ts||0));
-  const open=L.filter(v=>v.s.st!=='ok'),sum=r2(open.reduce((x,v)=>x+v.s.rest,0));
+  const open=L.filter(v=>v.s.st!=='ok'),sum=r2(open.reduce((x,v)=>x+v.s.rest,0)),paid=r2(L.reduce((x,v)=>x+v.s.gez,0));
   OL=L.filter(v=>P.zf==='alle'||(P.zf==='offen'?v.s.st!=='ok':v.s.st==='ok'));
-  let h=hdr('Zahlungen',true)+'<div class="mmsum"><b>'+E(fmt(sum))+'</b><small>'+(open.length?'offen bei '+open.length+(open.length===1?' Rechnung':' Rechnungen'):L.length?'Alles bezahlt. Super!':'Noch keine Rechnungen. Im Ordner „Aufträge“ auf „Fertig → Rechnung“ tippen, dann erscheint sie hier.')+'</small></div>'
+  const sumOk=r2(L.filter(v=>v.s.st==='ok').reduce((x,v)=>x+v.s.gez,0));
+  let sumHtml;
+  if(P.zf==='offen')sumHtml='<b>'+E(fmt(sum))+'</b><small>insgesamt offen'+(open.length?' bei '+open.length+(open.length===1?' Rechnung':' Rechnungen'):' – alles bezahlt. Super!')+'</small>';
+  else if(P.zf==='ok')sumHtml='<b>'+E(fmt(sumOk))+'</b><small>insgesamt bezahlt bei '+L.filter(v=>v.s.st==='ok').length+' Rechnungen</small>';
+  else sumHtml='<b>'+E(fmt(sum))+'</b><small>insgesamt offen'+(open.length?' bei '+open.length+(open.length===1?' Rechnung':' Rechnungen'):'')+'</small><div style="margin-top:10px;font-size:20px;font-weight:700;color:#4cc38a">'+E(fmt(paid))+'<span style="font-size:13px;font-weight:400;color:var(--muted)"> insgesamt bezahlt</span></div>'+(L.length?'':'<small>Noch keine Rechnungen. Im Ordner „Aufträge“ auf „Fertig → Rechnung“ tippen, dann erscheint sie hier.</small>');
+  let h=hdr('Zahlungen',true)+'<div class="mmsum">'+sumHtml+'</div>'
    +'<div class="mmf">'+[['alle','Alle'],['offen','Offen'],['ok','Bezahlt']].map(o=>'<button type="button" data-act="zfilt" data-v="'+o[0]+'"'+(P.zf===o[0]?' class="on"':'')+'>'+o[1]+'</button>').join('')+'</div>';
   h+=OL.map((v,i)=>{
     const s=v.s,b=v.b,a=v.a,z=db.zahl[s.k]||{};
@@ -2009,10 +2024,12 @@ mm.addEventListener('click',function(e){
     case 'scan':closeMenu();$('scanfile').click();return;
     case 'scangal':closeMenu();$('scanfile2').click();return;
     case 'ics':closeMenu();icsDatei();return;
+    case 'gcal':closeMenu();if(!$('kz').value.trim()&&!korb.size&&!teile.length){toast('Bitte zuerst Kennzeichen und Leistungen eintragen');return}window.kalender();return;
+    case 'sfopen':sfSetup();return;
     case 'sichern':sichern();setTimeout(render,600);return;
     case 'laden':$('lade').click();return;
     case 'theme':db.einst.theme=t.dataset.v;persist();applyTheme();render();return;
-    case 'mwst':db.einst.mwst=t.dataset.v;persist();updHint();window.rechne();render();return;
+    case 'mwst':db.einst.mwst=t.dataset.v;var nM=applyVatAll();persist();updHint();window.rechne();render();toast('MwSt. in '+nM+(nM===1?' Auftrag':' Aufträgen')+' angewendet');return;
     case 'filt':P.f=t.dataset.v;render();return;
     case 'see':v=CA[i];if(v)seeVisit(v);return;
     case 'pay':v=CA[i];if(v){setGez(v,v.s.sum);toast('Als bezahlt gespeichert');fillAuf();}return;
@@ -2048,7 +2065,7 @@ mm.addEventListener('input',function(e){
 });
 mm.addEventListener('change',function(e){
   var t=e.target;
-  if(t.dataset.set==='satz'){var s=parseP(t.value);if(s!==null&&s>0&&s<=100){db.einst.satz=s;persist();updHint();window.rechne();toast('Steuersatz gespeichert')}else{toast('Bitte einen Satz zwischen 0 und 100 eintragen')}t.value=String(db.einst.satz).replace('.',',')}
+  if(t.dataset.set==='satz'){var s=parseP(t.value);if(s!==null&&s>0&&s<=100){db.einst.satz=s;var nS=applyVatAll();persist();updHint();window.rechne();toast('Steuersatz in '+nS+(nS===1?' Auftrag':' Aufträgen')+' angewendet')}else{toast('Bitte einen Satz zwischen 0 und 100 eintragen')}t.value=String(db.einst.satz).replace('.',',')}
   else if(t.dataset.set==='klein'){db.einst.klein=!!t.checked;persist()}
   else if(t.dataset.pi!==undefined){
     var n=PN[Number(t.dataset.pi)],p=parseP(t.value);
@@ -2080,6 +2097,121 @@ $('lade').addEventListener('change',function(e){
   };
   r.readAsText(f);
 });
+
+
+/* ---------- Felder: Auswahl, HSN/TSN, MwSt. für alle Aufträge, Speichern in Dateien ---------- */
+var KRAFT=['Benzin','Diesel','Elektro','Hybrid'];
+var HUB=[600,700,800,900,999,1000,1100,1200,1242,1248,1300,1329,1332,1368,1390,1395,1398,1400,1461,1490,1496,1500,1560,1580,1590,1595,1598,1600,1700,1753,1796,1798,1800,1896,1900,1910,1950,1956,1968,1984,1995,1997,1998,1999,2000,2143,2148,2200,2300,2400,2500,2700,2800,2967,2987,2993,2996,2998,3000,3200,3500,3600,4000,4400,5000,6000];
+function optsHtml(list,cur,unit,other){
+  var l=list.slice(),c=String(cur||'').trim();
+  if(c&&l.map(String).indexOf(c)<0)l.push(c);
+  return '<option value="">– wählen –</option>'+l.map(function(x){return '<option value="'+E(x)+'"'+(String(x)===c?' selected':'')+'>'+E(x)+(unit?' '+unit:'')+'</option>'}).join('')+(other?'<option value="__x">Andere Zahl …</option>':'');
+}
+function selHtml(id,list,cur,isHub){return '<select id="'+id+'" data-sel="'+(isHub?'hub':'kr')+'">'+optsHtml(list,cur,isHub?'cm³':'',isHub)+'</select>'}
+function fillSel(el,list,isHub){
+  el.innerHTML=optsHtml(list,'',isHub?'cm³':'',isHub);el.setAttribute('data-sel',isHub?'hub':'kr');
+  var proto=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+  Object.defineProperty(el,'value',{configurable:true,
+    get:function(){var v=proto.get.call(this);return v==='__x'?'':v},
+    set:function(v){v=String(v==null?'':v).trim();
+      if(v){var ok=Array.prototype.some.call(this.options,function(o){return o.value.toLowerCase()===v.toLowerCase()});
+        if(!ok){var o=document.createElement('option');o.value=v;o.textContent=v+(isHub?' cm³':'');this.insertBefore(o,isHub?this.options[this.options.length-1]:null)}
+        else{Array.prototype.some.call(this.options,function(o){if(o.value.toLowerCase()===v.toLowerCase()){v=o.value;return true}})}}
+      proto.set.call(this,v)}});
+}
+fillSel($('kraftstoff'),KRAFT,false);fillSel($('hubraum'),HUB,true);
+document.addEventListener('change',function(e){
+  var t=e.target;if(!t||t.tagName!=='SELECT'||(t.getAttribute('data-sel')!=='hub'&&t.id!=='hubraum'))return;
+  if(t.options[t.selectedIndex]&&t.options[t.selectedIndex].value==='__x'){
+    var n=prompt('Hubraum in cm³ eintragen (z. B. 1995)','');var x=parseInt(String(n||'').replace(/\D/g,''),10);
+    if(x>=50&&x<=9999){var o=document.createElement('option');o.value=String(x);o.textContent=x+' cm³';t.insertBefore(o,t.options[t.options.length-1]);t.selectedIndex=Array.prototype.indexOf.call(t.options,o)}
+    else t.selectedIndex=0;
+  }
+},true);
+/* HSN: nur Ziffern, max. 4, danach springt es zur TSN. TSN: max. 3, GROSS. */
+function hsnTsn(e){
+  var t=e.target;if(!t||!t.id)return;
+  var id=t.id.replace(/^kf_/,'');
+  if(id==='hsn'){var v=t.value.replace(/\D/g,'').slice(0,4);if(v!==t.value)t.value=v;
+    if(v.length===4){var n=document.getElementById(t.id==='hsn'?'tsn':'kf_tsn');if(n)n.focus()}}
+  else if(id==='tsn'){var w=t.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);if(w!==t.value)t.value=w;
+    if(w.length===3){var m=document.getElementById(t.id==='tsn'?'motor':'kf_motor');if(m)m.focus()}}
+}
+document.addEventListener('input',hsnTsn,true);
+
+/* MwSt. in ALLEN Aufträgen (auch alten) anwenden */
+function applyVatAll(){
+  var c=mw(),n=0;
+  visits().forEach(function(v){
+    var st=stat(v),war=st.st==='ok',b=v.b;
+    b.mw={m:c.m,s:c.s};
+    var neu=berechne(ausBesuch(b,v.a,[])).g;b.summe=neu;
+    if(war&&db.zahl[st.k]&&!db.zahl[st.k].alt)db.zahl[st.k].gez=neu;
+    n++;
+  });
+  return n;
+}
+function paidSum(){return r2(visits().filter(function(v){return v.b.fertig}).reduce(function(x,v){return x+stat(v).gez},0))}
+
+/* Speichern in Dateien: Ordner „1Mamo KFZ Kunden“ */
+var SF_FOLDER='1Mamo KFZ Kunden',sfDir=null;
+function idb(){return new Promise(function(res,rej){var r=indexedDB.open('mamo_sf',1);r.onupgradeneeded=function(){r.result.createObjectStore('h')};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej()}})}
+function idbGet(k){return idb().then(function(d){return new Promise(function(res){var q=d.transaction('h').objectStore('h').get(k);q.onsuccess=function(){res(q.result)};q.onerror=function(){res(null)}})})}
+function idbSet(k,v){return idb().then(function(d){return new Promise(function(res){var q=d.transaction('h','readwrite').objectStore('h').put(v,k);q.onsuccess=function(){res()};q.onerror=function(){res()}})})}
+var canDir=!!window.showDirectoryPicker;
+function sfStatus(){return canDir?(sfDir?'Automatisch aktiv':'Einmal Ordner wählen, dann speichert die App automatisch'):'Nach jedem neuen Kunden/Auftrag: Button „In Dateien sichern“ antippen'}
+function sfData(){
+  var ex=Object.assign({},db,{fotos:{}});return JSON.stringify(ex);
+}
+async function sfWriteDir(){
+  if(!sfDir)return false;
+  try{
+    var perm=await sfDir.queryPermission({mode:'readwrite'});
+    if(perm!=='granted')perm=await sfDir.requestPermission({mode:'readwrite'});
+    if(perm!=='granted')return false;
+    var fh=await sfDir.getFileHandle('mamo-kunden-aktuell.json',{create:true}),w=await fh.createWritable();
+    await w.write(sfData());await w.close();return true;
+  }catch(err){return false}
+}
+async function sfShare(){
+  var daten=sfData(),name='mamo-kunden-'+heuteIso()+'.json';
+  try{
+    var f=new File([daten],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});markiereSicherung();toast('Gespeichert. Ordner: '+SF_FOLDER);return}
+  }catch(err){if(err&&err.name==='AbortError')return}
+  sichern();
+}
+async function sfSetup(){
+  if(canDir){
+    try{sfDir=await window.showDirectoryPicker({mode:'readwrite',id:'mamokfz'});await idbSet('dir',sfDir);
+      var ok=await sfWriteDir();toast(ok?'Fertig. Ab jetzt wird automatisch gespeichert.':'Konnte nicht in den Ordner schreiben');render()}catch(err){}
+  }else{
+    alert('Auf dem iPhone erlaubt Safari kein stilles Speichern in einen Ordner.\n\nSo geht es mit einem Tipp:\n1. Nach jedem neuen Kunden/Auftrag erscheint unten „In Dateien sichern“.\n2. Antippen, „In Dateien sichern“ wählen.\n3. Beim ersten Mal den Ordner „'+SF_FOLDER+'“ auswählen (ggf. neu anlegen). iOS merkt sich den Ordner.');
+    sfShare();
+  }
+}
+var sfb=document.createElement('div');sfb.id='sfbar';
+sfb.innerHTML='<span>Gespeichert. Jetzt in „'+SF_FOLDER+'“ sichern?</span><button type="button" id="sfgo">In Dateien sichern</button><button type="button" class="x" id="sfx" aria-label="Schließen">✕</button>';
+document.body.appendChild(sfb);
+var sfTimer;
+function sfHide(){sfb.classList.remove('on')}
+document.getElementById('sfx').addEventListener('click',sfHide);
+document.getElementById('sfgo').addEventListener('click',function(){sfHide();sfShare()});
+var sfLast='';
+function sfAuto(){
+  clearTimeout(sfTimer);
+  sfTimer=setTimeout(async function(){
+    var cur=Object.keys(db.autos).length+'|'+visits().length;if(cur===sfLast)return;sfLast=cur;
+    if(canDir&&sfDir){if(await sfWriteDir())return}
+    sfb.classList.add('on');setTimeout(sfHide,15000);
+  },600);
+}
+if(canDir)idbGet('dir').then(function(h){if(h){sfDir=h}}).catch(function(){});
+(function(){
+  var cnt0=Object.keys(db.autos).length+'|'+visits().length;sfLast=cnt0;
+  var _p2=window.persist;
+  window.persist=function(){var r=_p2.apply(this,arguments);try{sfAuto()}catch(err){}return r};
+})();
 
 /* ---------- Start ---------- */
 applyTheme();applyPrices();updHint();badge();persist();
