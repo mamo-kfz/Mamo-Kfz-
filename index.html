@@ -413,7 +413,7 @@ button{border-radius:16px;background:linear-gradient(180deg,#d12d34,#a81c22);box
 function firmaClean(f){
   try{
     if(!f||typeof f!=='object')return null;
-    var w=(f.werk&&typeof f.werk==='object')?f.werk:{},o={werk:{},logo:'',preise:{}};
+    var w=(f.werk&&typeof f.werk==='object')?f.werk:{},o={werk:{},logo:'',logoImg:'',ueber:'',preise:{},team:[]};
     ['name','zeile','ort','mail','tel','kontakt','calMail','ordner'].forEach(function(k){o.werk[k]=String(w[k]==null?'':w[k]).slice(0,200)});
     var sa=Number(w.satz);o.werk.satz=(isFinite(sa)&&sa>0&&sa<1000)?sa:0;
     if(typeof f.logo==='string'&&/^\s*<svg[\s>]/i.test(f.logo)&&f.logo.length<20000&&!/<script|\son[a-z]+\s*=|javascript:|<foreignObject|<iframe/i.test(f.logo))o.logo=f.logo;
@@ -422,7 +422,10 @@ function firmaClean(f){
       var it=a.filter(function(x){return Array.isArray(x)&&typeof x[0]==='string'&&x[0]&&isFinite(Number(x[1]))&&Number(x[1])>=0}).map(function(x){return [x[0],Number(x[1])]});
       if(it.length)o.preise[g]=it;
     });
-    if(Array.isArray(f.team))o.team=f.team.slice(0,30).map(function(t){return {n:String((t&&t.n)||'').slice(0,80),r:String((t&&t.r)||'').slice(0,80)}});
+    var okImg=function(x,max){return typeof x==='string'&&x.length<max&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(x)};
+    if(okImg(f.logoImg,400000))o.logoImg=f.logoImg;
+    o.ueber=String(f.ueber||'').slice(0,800);
+    if(Array.isArray(f.team))o.team=f.team.slice(0,12).map(function(t){var m={n:String((t&&t.n)||'').slice(0,80),r:String((t&&t.r)||'').slice(0,80)};if(t&&okImg(t.b,150000))m.b=t.b;return m}).filter(function(t){return t.n});
     return o;
   }catch(e){return null}
 }
@@ -938,8 +941,9 @@ $('hist').addEventListener('click',e=>{
 });
 
 /* ---------- Teile, Auftrag / Kostenvoranschlag ---------- */
-const WERK=Object.assign({name:'',zeile:'',ort:'',mail:'',tel:'',kontakt:'',calMail:'',ordner:'',satz:0,logo:''},FIRMA0?Object.assign({},FIRMA0.werk,{logo:FIRMA0.logo}):{});
+const WERK=Object.assign({name:'',zeile:'',ort:'',mail:'',tel:'',kontakt:'',calMail:'',ordner:'',satz:0,logo:'',logoImg:'',ueber:'',team:[]},FIRMA0?Object.assign({},FIRMA0.werk,{logo:FIRMA0.logo,logoImg:FIRMA0.logoImg,ueber:FIRMA0.ueber,team:FIRMA0.team}):{});
 function logoSvg(cls,ink,sub){
+  if(WERK.logoImg)return '<img class="'+cls+'" alt="Logo" src="'+WERK.logoImg+'">';
   if(!WERK.logo)return '';
   return WERK.logo.replace(/\{CLS\}/g,cls).replace(/\{INK\}/g,ink).replace(/\{SUB\}/g,sub);
 }
@@ -979,10 +983,10 @@ function aktuell(){
   return {d:$('datum').value||heuteIso(),kz:kzText(),auto:$('auto').value.trim(),kunde:$('kunde').value.trim(),
     tel:$('tel').value.trim(),fin:finNorm($('fin').value),jahr:$('jahr').value.trim(),motor:$('motor').value.trim(),hsn:$('hsn').value.trim().toUpperCase(),tsn:$('tsn').value.trim().toUpperCase(),hubraum:$('hubraum').value.trim(),kw:$('kw').value.trim(),kraftstoff:$('kraftstoff').value.trim(),fotos:fotos.map(f=>f.url),km:isNaN(kmv)?null:kmv,
     teile:teile.map(p=>({n:p.n,q:p.q,p:p.p})),arbeiten:[...korb].map(([n,q])=>({n:n,q:q,p:PREIS[n]})),
-    stunden:zahl('stunden'),satz:zahl('satz'),rabatt:rabattProzent()};
+    stunden:zahl('stunden'),satz:zahl('satz'),rabatt:rabattProzent(),von:window.__ma||''};
 }
 function ausBesuch(b,a,urls){
-  const o={d:b.d,kz:a.kz,km:b.km,teile:b.teile||[],arbeiten:b.arbeiten||[],stunden:b.stunden||0,satz:b.satz||0,rabatt:b.rabatt||0,sonst:b.sonst||[],rnr:b.rnr||'',fotos:urls||[]};
+  const o={d:b.d,kz:a.kz,km:b.km,teile:b.teile||[],arbeiten:b.arbeiten||[],stunden:b.stunden||0,satz:b.satz||0,rabatt:b.rabatt||0,sonst:b.sonst||[],rnr:b.rnr||'',von:b.von||'',fotos:urls||[]};
   FZ.forEach(k=>o[k]=a[k]||'');return o;
 }
 async function ausBesuchA(b,a){
@@ -1005,7 +1009,7 @@ function auftragHtml(o,typ){
     +['Auftrag','Kostenvoranschlag','Rechnung'].map(x=>'<button type="button" data-typ="'+x+'"'+(x===typ?' class="on"':'')+'>'+x+'</button>').join('')+'</div>';
   h+='<div class="apaper"><div class="alogoW">'+logoSvg('alogo','#111214','#55524d')+'</div>'
     +'<div class="ahead"><div><div class="aco" style="margin-top:0">'+E(WERK.ort)+(WERK.mail?' · '+E(WERK.mail):'')+'</div>'
-    +'<div class="aco" style="margin-top:2px"><b>Ansprechpartner:</b> '+E(WERK.kontakt)+'</div></div>'
+    +'<div class="aco" style="margin-top:2px"><b>Ansprechpartner:</b> '+E(o.von||WERK.kontakt)+'</div></div>'
     +'<div class="aty"><b>'+E(typ)+(typ==='Rechnung'&&o.rnr?' '+E(o.rnr):'')+'</b><span>'+E(dDe(o.d))+'</span></div></div>';
   const f=fzZeilen(o);
   if(f.length)h+='<div class="afz">'+f.map(x=>'<div'+(x[2]?' class="'+x[2]+'"':'')+'><small>'+x[0]+'</small>'+E(x[1])+'</div>').join('')+'</div>';
@@ -1029,7 +1033,7 @@ function auftragHtml(o,typ){
 function auftragText(o,typ){
   const b=berechne(o),L=[];
   const zl=(q,n,p)=>(q>1?q+' × ':'')+n+(q>1?' (je '+fmt(p)+')':'')+': '+fmt(q*p);
-  L.push(WERK.name+' – '+typ,'Datum: '+dDe(o.d),'Ansprechpartner: '+WERK.kontakt);
+  L.push(WERK.name+' – '+typ,'Datum: '+dDe(o.d),'Ansprechpartner: '+(o.von||WERK.kontakt));
   fzZeilen(o).forEach(([l,v])=>L.push(l+': '+v));
   if((o.teile||[]).length){L.push('','Teile:');o.teile.forEach(p=>L.push(zl(p.q,p.n,p.p)))}
   if((o.arbeiten||[]).length||o.stunden>0){
@@ -1725,8 +1729,30 @@ function openMenu(p){if(p)P.page=p;document.body.classList.add('mmopen');render(
 function closeMenu(){document.body.classList.remove('mmopen')}
 new MutationObserver(function(){if(P.back&&!document.body.classList.contains('zeigeA')){P.back=false;openMenu()}}).observe(document.body,{attributes:true,attributeFilter:['class']});
 
-function hdr(t,back){return '<div class="mmh">'+(back?'<button type="button" class="mmbk" data-act="home">‹ Zurück</button>':'')+'<h1>'+t+'</h1><button type="button" class="mmx" data-act="close" aria-label="Schließen">✕</button></div>'}
-function row(act,t,sub,bd,warn){return '<button type="button" class="mmr" data-act="'+act+'"><span class="tx">'+t+(sub?'<small'+(warn?' class="warn"':'')+'>'+sub+'</small>':'')+'</span>'+(bd?'<span class="bd">'+bd+'</span>':'')+'<span class="ch">›</span></button>'}
+function hdr(t,back){return '<div class="mmh">'+(back?'<button type="button" class="mmbk" data-act="'+(typeof back==='string'?back:'home')+'">‹ Zurück</button>':'')+'<h1>'+t+'</h1><button type="button" class="mmx" data-act="close" aria-label="Schließen">✕</button></div>'}
+var ICONS={
+ scan:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+ scangal:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+ kd:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 010 6.8M21.5 20c0-2.6-1.4-4.6-3.5-5.5"/>',
+ auf:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h6"/>',
+ zahl:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5a4.5 4.5 0 100 7M7.5 11h6M7.5 13.5h6"/>',
+ gcal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+ ics:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/>',
+ sichern:'<path d="M12 4v11M7.5 11l4.5 4.5 4.5-4.5M5 20h14"/>',
+ fexport:'<path d="M12 4v11M7.5 11l4.5 4.5 4.5-4.5M5 20h14"/>',
+ laden:'<path d="M12 16V5M7.5 9l4.5-4.5L16.5 9M5 20h14"/>',
+ set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+ about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8v.1"/>',
+ appedit:'<path d="M12 3a9 9 0 100 18c1.4 0 2-1 1.5-2.2-.5-1.2.2-2.3 1.5-2.3H17a4 4 0 004-4c0-5-4-9.5-9-9.5z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="11" r="1"/>',
+ preise:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',
+ undo:'<path d="M9 7l-5 5 5 5M4 12h10a6 6 0 010 8h-3"/>',
+ sfopen:'<path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z"/>',
+ sname:'<circle cx="12" cy="8.5" r="3.7"/><path d="M4.5 20c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>',
+ slogout:'<path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9"/>',
+ firmaload:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>'
+};
+function icon(act){var p=ICONS[act];return p?'<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg></span>':''}
+function row(act,t,sub,bd,warn){return '<button type="button" class="mmr" data-act="'+act+'">'+icon(act)+'<span class="tx">'+t+(sub?'<small'+(warn?' class="warn"':'')+'>'+sub+'</small>':'')+'</span>'+(bd?'<span class="bd">'+bd+'</span>':'')+'<span class="ch">›</span></button>'}
 function waNum(t){var d=String(t||'').replace(/[^\d+]/g,'');if(!d)return '';if(d.charAt(0)==='+')return d.slice(1).replace(/\D/g,'');if(d.indexOf('00')===0)return d.slice(2);if(d.charAt(0)==='0')return '49'+d.slice(1);return d.indexOf('49')===0?d:'49'+d}
 function waLink(tel,text){var n=waNum(tel);return n?'https://wa.me/'+n+(text?'?text='+encodeURIComponent(text):''):''}
 function vorname(a){return String(a.kunde||'').trim().split(/\s+/)[0]||''}
@@ -1739,7 +1765,7 @@ function backupInfo(){
 function render(){
   var w=document.getElementById('mmw'),h='';
   if(P.page==='home')h=pHome();else if(P.page==='auf')h=pAuf();else if(P.page==='kd')h=pKd();
-  else if(P.page==='zahl')h=pZahl();else if(P.page==='set')h=pSet();else if(P.page==='preise')h=pPreise();else if(P.page==='undo')h=pUndo();else if(P.page==='kform')h=pKForm();else if(P.page==='aed')h=pAed();
+  else if(P.page==='zahl')h=pZahl();else if(P.page==='set')h=pSet();else if(P.page==='preise')h=pPreise();else if(P.page==='undo')h=pUndo();else if(P.page==='kform')h=pKForm();else if(P.page==='aed')h=pAed();else if(P.page==='about')h=pAbout();else if(P.page==='appedit')h=pAppEdit();
   w.innerHTML=h;
   if(P.page==='auf')fillAuf();if(P.page==='kd')fillKd();if(P.page==='aed')aeTot();
 }
@@ -1756,6 +1782,8 @@ function pHome(){
    +'<div class="mmt">Termin</div>'
    +row('gcal','Termin in Google Kalender eintragen','Mit Kosten und Leistungen aus dem aktuellen Auftrag')
    +row('ics','Termin als Kalenderdatei (.ics)','Nur für Apple Kalender')
+   +'<div class="mmt">Info</div>'
+   +row('about','Über uns','Team und Kontakt')
    +'<div class="mmt">Daten</div>'
    +row('sichern','Sicherung speichern',bk.txt+(bk.warn?' – bitte sichern':''),'',bk.warn)
    +row('laden','Sicherung laden','Gespeicherte Datei wieder einlesen (nichts geht doppelt rein)')
@@ -1764,7 +1792,7 @@ function pHome(){
 function pSet(){
   var e=db.einst,c=mw(),un=snaps().length;
   var sg=function(act,cur,opts){return '<div class="seg3">'+opts.map(function(o){return '<button type="button" data-act="'+act+'" data-v="'+o[0]+'"'+(cur===o[0]?' class="on"':'')+'>'+o[1]+'</button>'}).join('')+'</div>'};
-  return hdr('Einstellungen',true)+ordner()+'<div class="mmt">Darstellung</div>'+sg('theme',e.theme,[['auto','Automatisch'],['dark','Dunkel'],['light','Hell']])
+  return hdr('Einstellungen',true)+kontoBlock()+'<div class="mmt">Darstellung</div>'+sg('theme',e.theme,[['auto','Automatisch'],['dark','Dunkel'],['light','Hell']])
    +'<div class="mmt">Umsatzsteuer (MwSt.)</div>'
    +sg('mwst',e.mwst,[['aus','Keine MwSt.'],['inkl','Preise inkl. MwSt.'],['plus','MwSt. aufschlagen']])
    +'<div class="mmc"><div class="mmline"><label for="mmsatz">Steuersatz</label><input type="text" inputmode="decimal" id="mmsatz" data-set="satz" value="'+E(String(c.s).replace('.',','))+'"><span class="eu">%</span></div>'
@@ -1774,9 +1802,12 @@ function pSet(){
    +row('preise','Preise anpassen','Preise ändern und eigene Leistungen anlegen')
    +'<div class="mmt">Daten</div>'
    +row('undo','Gelöschtes wiederherstellen',un?un+' Stand'+(un===1?'':'e')+' verfügbar':'Nichts zum Wiederherstellen')
+   +row('sfopen','Speichern in Dateien: „'+SF_FOLDER+'“',sfStatus())
    +row('sichern','Sicherung speichern',backupInfo().txt)
    +row('laden','Sicherung laden','')
-   +'<p class="mmnote">Alle Daten liegen nur auf diesem iPhone. Bitte regelmäßig „Sicherung speichern“ und die Datei in „Dateien“ ablegen. Nach dem Laden einer Sicherung werden Kunden und Aufträge ergänzt, nichts wird doppelt angelegt.</p>';
+   +'<p class="mmnote">Alle Daten liegen in der gemeinsamen Datenbank. Zusätzlich kannst du regelmäßig „Sicherung speichern“ und die Datei in „Dateien“ ablegen. Nach dem Laden einer Sicherung werden Kunden und Aufträge ergänzt, nichts wird doppelt angelegt.</p>'
+   +'<div class="mmt">App bearbeiten</div>'
+   +row('appedit','App bearbeiten','Logo, Firmendaten, Über uns und Team-Fotos');
 }
 function pAuf(){
   return hdr('Aufträge',true)
@@ -2050,6 +2081,16 @@ mm.addEventListener('click',function(e){
     case 'ics':closeMenu();icsDatei();return;
     case 'gcal':closeMenu();if(!$('kz').value.trim()&&!korb.size&&!teile.length){toast('Bitte zuerst Kennzeichen und Leistungen eintragen');return}window.kalender();return;
     case 'sfopen':sfSetup();return;
+    case 'about':P.page='about';render();mm.scrollTop=0;return;
+    case 'appedit':FE=firmaCur();P.page='appedit';render();mm.scrollTop=0;return;
+    case 'logoup':aeCollect();aeLogoPick();return;
+    case 'logoreset':aeCollect();FE.logoImg='';render();toast('Standard-Logo. Zum Übernehmen unten „Speichern“');return;
+    case 'tadd':aeCollect();if(FE.team.length>=12){toast('Mehr als 12 Personen sind nicht möglich');return}FE.team.push({n:'',r:''});render();return;
+    case 'tdel':aeCollect();FE.team.splice(i,1);render();return;
+    case 'tphoto':aeCollect();aePhotoPick(i);return;
+    case 'tphotodel':aeCollect();if(FE.team[i])delete FE.team[i].b;render();return;
+    case 'fsave':aeSaveForm();return;
+    case 'fexport':aeExport();return;
     case 'sname':askName(true);return;
     case 'firmaload':firmaPick();return;
     case 'slogout':if(confirm('Abmelden? Die Daten bleiben auf diesem Handy gespeichert.'))SY.auth.signOut();return;
@@ -2246,6 +2287,7 @@ if(canDir)idbGet('dir').then(function(h){if(h){sfDir=h}}).catch(function(){});
 var FBCFG={apiKey:"AIzaSyCf73u0E3E9nliES3G-4V3ASDb3oXm5_6c",authDomain:"mamo-kfz-werkstatt.firebaseapp.com",projectId:"mamo-kfz-werkstatt",storageBucket:"mamo-kfz-werkstatt.firebasestorage.app",messagingSenderId:"946063480310",appId:"1:946063480310:web:9e1032bd30ff1158de23d7"};
 var SY={off:false,user:null,name:'',last:{autos:{},zahl:{},einst:null},srv:{autos:false,zahl:false,einst:false},unsubs:[],applying:false,t:null};
 try{SY.name=localStorage.getItem('mamo_user')||''}catch(err){}
+window.__ma=SY.name;
 try{var L0=JSON.parse(localStorage.getItem('mamo_sync_v1')||'null');if(L0&&L0.autos&&L0.zahl)SY.last={autos:L0.autos,zahl:L0.zahl,einst:L0.einst||null}}catch(err){}
 function saveLast(){try{localStorage.setItem('mamo_sync_v1',JSON.stringify(SY.last))}catch(err){}}
 function hs(s){var h=5381,i;for(i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h+':'+s.length}
@@ -2275,7 +2317,7 @@ function askName(force,cb){
   if(SY.name&&!force){if(cb)cb();return}
   var o=syOv('syName','<h2>Dein Kürzel</h2><p>Zum Beispiel deine Initialen. Es wird bei jedem neuen Kunden und Auftrag von diesem Handy gespeichert.</p><input id="syN" type="text" maxlength="24" placeholder="z. B. Initialen" autocomplete="off" value="'+E(SY.name)+'"><button type="button" id="syNg">Speichern</button>'+(force?'<button type="button" class="x" id="syNx">Abbrechen</button>':'')+'<div class="syerr" id="syNe"></div>');
   var ok=function(){var v=document.getElementById('syN').value.trim();if(v.length<2){document.getElementById('syNe').textContent='Bitte ein Kürzel eintragen.';return}
-    SY.name=v;try{localStorage.setItem('mamo_user',v)}catch(err){}syHide('syName');if(P.page==='set')render();if(cb)cb()};
+    SY.name=v;window.__ma=v;try{localStorage.setItem('mamo_user',v)}catch(err){}syHide('syName');if(P.page==='set')render();if(cb)cb()};
   document.getElementById('syNg').addEventListener('click',ok);
   var x=document.getElementById('syNx');if(x)x.addEventListener('click',function(){syHide('syName')});
 }
@@ -2373,7 +2415,7 @@ function firmaAnwenden(raw){
   if(cur===str)return false;
   try{localStorage.setItem('mamo_firma',str)}catch(err){}
   Object.keys(WERK).forEach(function(k){delete WERK[k]});
-  Object.assign(WERK,f.werk,{logo:f.logo||''});
+  Object.assign(WERK,f.werk,{logo:f.logo||'',logoImg:f.logoImg||'',ueber:f.ueber||'',team:f.team||[]});
   SF_FOLDER=WERK.ordner||'Kunden-Sicherung';
   Object.keys(preise).forEach(function(k){delete preise[k]});Object.assign(preise,f.preise);
   Object.keys(PREIS).forEach(function(k){delete PREIS[k]});
@@ -2383,6 +2425,7 @@ function firmaAnwenden(raw){
   Array.from(korb.keys()).forEach(function(n){if(!Object.prototype.hasOwnProperty.call(PREIS,n))korb.delete(n)});
   window.rechne();updHint();
   if(WERK.satz>0&&!(db.satz>0)&&!Number($('satz').value)){$('satz').value=WERK.satz;window.rechne()}
+  if(P.page==='appedit')FE=firmaCur();
   if(document.body.classList.contains('mmopen'))render();
   return true;
 }
@@ -2395,12 +2438,154 @@ function firmaPick(){
         var f=null;try{f=firmaClean(JSON.parse(String(r.result)))}catch(err){}
         if(!f||!Object.keys(f.preise).length||!f.werk.name){alert('Diese Datei enthält keine gültigen Firmendaten (Name und Preisliste fehlen).');return}
         if(!SY.user||!SY.fs){alert('Bitte zuerst anmelden.');return}
+        var cu=firmaCur();if(!f.logoImg&&cu.logoImg)f.logoImg=cu.logoImg;if(!f.ueber&&cu.ueber)f.ueber=cu.ueber;
+        f.team.forEach(function(t){if(!t.b){var o=cu.team.filter(function(x){return x.n===t.n&&x.b})[0];if(o)t.b=o.b}});
         if(!confirm('Firmendaten „'+f.werk.name+'“ mit '+Object.keys(f.preise).length+' Preisgruppen in die Datenbank speichern?\nSie gelten dann auf allen Handys.'))return;
         SY.fs.collection('firma').doc('stamm').set({j:JSON.stringify(f),_u:Date.now(),by:SY.name}).then(function(){firmaAnwenden(f);toast('Firmendaten gespeichert')}).catch(function(e){syErr(e)});
       };r.readAsText(fl);
     });
   }
   i.click();
+}
+
+/* ---------- Konto, Über uns, App bearbeiten ---------- */
+function kontoBlock(){
+  if(SY.off)return '';
+  return '<div class="mmt">Konto</div>'
+   +row('sname','Mein Kürzel: '+E(SY.name||'nicht gesetzt'),'Steht als Ansprechpartner auf deinen Aufträgen')
+   +row('slogout','Abmelden',E(syStatus()));
+}
+function initials(n){return String(n||'?').trim().split(/[\s.]+/).filter(Boolean).slice(0,2).map(function(x){return x.charAt(0).toUpperCase()}).join('')||'?'}
+function pAbout(){
+  var h=hdr('Über uns',true)+'<div class="abt">';
+  var lg=logoSvg('abl','var(--text,#f4f2ee)','var(--muted,#8a8f97)');
+  if(lg)h+='<div class="mmlogo">'+lg+'</div>';
+  h+='<div class="abname">'+E(WERK.name||'Werkstatt')+'</div>'+((WERK.zeile||WERK.ort)?'<div class="abz">'+E([WERK.zeile,WERK.ort].filter(Boolean).join(' · '))+'</div>':'');
+  if(WERK.ueber)h+='<p class="abtx">'+E(WERK.ueber)+'</p>';
+  var tm=WERK.team||[];
+  h+='<div class="mmt" style="text-align:left">Team</div>';
+  if(!tm.length)h+='<p class="mmempty">Noch kein Team eingetragen. Das geht unter Einstellungen → App bearbeiten.</p>';
+  tm.forEach(function(t){
+    h+='<div class="mmc tm">'+(t.b?'<img class="av" alt="" src="'+t.b+'">':'<div class="av">'+E(initials(t.n))+'</div>')+'<div><b>'+E(t.n)+'</b>'+(t.r?'<small>'+E(t.r)+'</small>':'')+'</div></div>';
+  });
+  var tel=String(WERK.tel||'').replace(/[^\d+]/g,'');
+  if(tel||WERK.mail)h+='<div class="mmbt" style="justify-content:center;margin-top:16px">'+(tel?'<a class="sb pri" href="tel:'+E(tel)+'">Anrufen</a>':'')+(WERK.mail?'<a class="sb" href="mailto:'+E(WERK.mail)+'">E-Mail</a>':'')+'</div>';
+  return h+'</div>';
+}
+var FE=null;
+function firmaCur(){
+  var f=null;try{f=firmaClean(JSON.parse(localStorage.getItem('mamo_firma')||'null'))}catch(err){}
+  if(!f)f={werk:{name:'',zeile:'',ort:'',mail:'',tel:'',kontakt:'',calMail:'',ordner:'',satz:0},logo:'',logoImg:'',ueber:'',preise:{},team:[]};
+  return f;
+}
+function aeCollect(){
+  if(!FE)return;
+  var g=function(id){var e=document.getElementById('ae_'+id);return e?e.value:null};
+  ['name','ort','mail','tel','kontakt','calMail','ordner'].forEach(function(k){var v=g(k);if(v!==null)FE.werk[k]=v.trim()});
+  var sv=g('satz');if(sv!==null){var n=parseFloat(String(sv).replace(',','.'));FE.werk.satz=(n>0)?n:0}
+  var u=g('ueber');if(u!==null)FE.ueber=u;
+  FE.team.forEach(function(t,i){var a=g('tn'+i),b=g('tr'+i);if(a!==null)t.n=a.trim();if(b!==null)t.r=b.trim()});
+}
+function aePrevLogo(f){
+  if(f.logoImg)return '<img src="'+f.logoImg+'" alt="Logo">';
+  if(f.logo)return f.logo.replace(/\{CLS\}/g,'aep').replace(/\{INK\}/g,'var(--text,#f4f2ee)').replace(/\{SUB\}/g,'var(--muted,#8a8f97)');
+  return '<span class="mmempty">Noch kein Logo</span>';
+}
+function pAppEdit(){
+  var f=FE||(FE=firmaCur()),w=f.werk;
+  var inp=function(id,lbl,val,ph,mode){return '<div class="fl">'+lbl+'</div><input type="text" id="ae_'+id+'" value="'+E(val==null?'':String(val))+'" placeholder="'+E(ph||'')+'"'+(mode?' inputmode="'+mode+'"':'')+' autocomplete="off" autocapitalize="off">'};
+  var h=hdr('App bearbeiten','set')+'<p class="mmnote">Das ist nur für dich als Chef. Alles, was du hier speicherst, gilt sofort auf allen Handys.</p>';
+  h+='<div class="mmt">Logo</div><div class="mmc"><div class="aelogo">'+aePrevLogo(f)+'</div>'
+    +'<div class="mmbt" style="justify-content:center"><button type="button" class="sb pri" data-act="logoup">Logo hochladen</button>'+(f.logoImg?'<button type="button" class="sb" data-act="logoreset">Standard-Logo</button>':'')+'</div>'
+    +'<p class="mmnote" style="margin-bottom:0">Bild (PNG, JPG) oder SVG-Datei. Am besten mit transparentem Hintergrund.</p></div>';
+  h+='<div class="mmt">Firmendaten</div><div class="mmc mmform">'
+    +inp('name','Firmenname',w.name,'z. B. Meine Werkstatt')+inp('ort','Ort',w.ort,'Ort')+inp('mail','E-Mail',w.mail,'E-Mail','email')+inp('tel','Telefon',w.tel,'Telefonnummer','tel')
+    +inp('kontakt','Ansprechpartner (wenn kein Kürzel da ist)',w.kontakt,'Name')+inp('satz','Stundensatz in €',w.satz?String(w.satz).replace('.',','):'','z. B. 45','decimal')
+    +inp('calMail','Google-Kalender (E-Mail)',w.calMail,'Kalender-E-Mail','email')+inp('ordner','Ordnername in „Dateien“',w.ordner,'z. B. Kunden-Sicherung')+'</div>';
+  h+='<div class="mmt">Über uns</div><div class="mmc mmform"><div class="fl">Kurztext (optional)</div><textarea id="ae_ueber" rows="4" maxlength="800" placeholder="Ein, zwei Sätze über die Werkstatt">'+E(f.ueber||'')+'</textarea></div>';
+  f.team.forEach(function(t,i){
+    h+='<div class="mmc mmform"><div class="tm" style="padding:0 0 10px">'+(t.b?'<img class="av" alt="" src="'+t.b+'">':'<div class="av">'+E(initials(t.n))+'</div>')
+      +'<div style="flex:1;min-width:0"><div class="fl" style="margin-top:0">Name</div><input type="text" id="ae_tn'+i+'" value="'+E(t.n||'')+'" placeholder="Name" autocomplete="off"><div class="fl">Aufgabe</div><input type="text" id="ae_tr'+i+'" value="'+E(t.r||'')+'" placeholder="z. B. Geschäftsführung" autocomplete="off"></div></div>'
+      +'<div class="mmbt" style="margin-top:2px"><button type="button" class="sb pri" data-act="tphoto" data-i="'+i+'">'+(t.b?'Anderes Foto':'Foto wählen')+'</button>'+(t.b?'<button type="button" class="sb" data-act="tphotodel" data-i="'+i+'">Foto entfernen</button>':'')+'<button type="button" class="sb" data-act="tdel" data-i="'+i+'">Person löschen</button></div></div>';
+  });
+  h+='<button type="button" class="sb" data-act="tadd" style="margin:0 0 14px">+ Person hinzufügen</button>';
+  h+='<button type="button" class="sb pri big" data-act="fsave">Speichern</button>';
+  h+='<div class="mmt">Weitere Möglichkeiten</div>'
+    +row('preise','Preise anpassen','Preise ändern und eigene Leistungen anlegen')
+    +row('firmaload','Firmendaten aus Datei laden','Datei werkstatt-daten.json einlesen')
+    +row('fexport','Firmendaten als Datei sichern','Zur Sicherheit in „Dateien“ ablegen (nicht auf GitHub!)');
+  return h;
+}
+function aeSize(f){return JSON.stringify(f).length}
+function aeSaveForm(){
+  aeCollect();
+  if(!FE.werk.name){toast('Bitte einen Firmennamen eintragen');return}
+  FE.team=FE.team.filter(function(t){return t.n});
+  aeSave(function(){return FE},'Gespeichert. Gilt jetzt auf allen Handys',function(){FE=firmaCur();render()});
+}
+function aeSave(mod,msg,done){
+  if(!SY.user||!SY.fs){alert('Bitte zuerst anmelden.');return}
+  var f=mod(firmaCur())||firmaCur();f=firmaClean(f);
+  if(!f){toast('Ungültige Daten');return}
+  if(aeSize(f)>900000){toast('Zu viele oder zu große Bilder. Bitte kleinere Bilder nehmen.');return}
+  SY.fs.collection('firma').doc('stamm').set({j:JSON.stringify(f),_u:Date.now(),by:SY.name}).then(function(){firmaAnwenden(f);toast(msg||'Gespeichert');if(done)done()}).catch(function(e){syErr(e)});
+}
+function aeExport(){
+  var f=firmaCur();var txt=JSON.stringify({werk:f.werk,logo:f.logo,logoImg:f.logoImg,ueber:f.ueber,preise:f.preise,team:f.team},null,1);
+  var name='werkstatt-daten.json';
+  try{var file=new File([txt],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:name}).catch(function(){});return}}catch(err){}
+  var url=URL.createObjectURL(new Blob([txt],{type:'application/json'})),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},3000);
+}
+function aeImg(file,max,square,type,q){
+  return new Promise(function(res,rej){
+    var r=new FileReader();r.onerror=rej;
+    r.onload=function(){var im=new Image();im.onerror=rej;im.onload=function(){
+      var w=im.naturalWidth,h=im.naturalHeight,sx=0,sy=0,sw=w,sh=h;
+      if(square){var m=Math.min(w,h);sx=(w-m)/2;sy=(h-m)/2;sw=sh=m}
+      var k=Math.min(1,max/Math.max(sw,sh)),cw=Math.max(1,Math.round(sw*k)),ch=Math.max(1,Math.round(sh*k));
+      var c=document.createElement('canvas');c.width=cw;c.height=ch;var x=c.getContext('2d');
+      if(type==='image/jpeg'){x.fillStyle='#fff';x.fillRect(0,0,cw,ch)}
+      x.drawImage(im,sx,sy,sw,sh,0,0,cw,ch);res(c.toDataURL(type,q));
+    };im.src=r.result};
+    r.readAsDataURL(file);
+  });
+}
+function aeFile(id,accept,cb){
+  var i=document.getElementById(id);
+  if(!i){i=document.createElement('input');i.type='file';i.id=id;i.accept=accept;i.style.display='none';document.body.appendChild(i);
+    i.addEventListener('change',function(){var fl=i.files&&i.files[0];i.value='';if(fl)i._cb(fl)})}
+  i._cb=cb;i.click();
+}
+function aeLogoPick(){
+  aeFile('aelogofile','image/*,.svg',function(fl){
+    var isSvg=fl.type==='image/svg+xml'||/\.svg$/i.test(fl.name);
+    if(isSvg){
+      var r=new FileReader();r.onload=function(){
+        var t=String(r.result||'');
+        var ok=firmaClean({werk:{},logo:t,preise:{}});
+        if(!ok||!ok.logo){toast('Diese SVG-Datei kann nicht verwendet werden');return}
+        t=ok.logo;if(/\{CLS\}/.test(t)===false){t=t.replace(/<svg\b([^>]*?)\sclass="[^"]*"/i,'<svg$1').replace(/<svg\b/i,'<svg class="{CLS}"')}
+        FE.logo=t;FE.logoImg='';render();toast('Logo übernommen. Unten „Speichern“ tippen');
+      };r.readAsText(fl);return;
+    }
+    aeImg(fl,700,false,'image/png').then(function(d){
+      if(d.length>380000)return aeImg(fl,420,false,'image/png');return d;
+    }).then(function(d){
+      if(d.length>380000)return aeImg(fl,600,false,'image/jpeg',.85);return d;
+    }).then(function(d){
+      if(d.length>390000){toast('Das Bild ist zu groß. Bitte ein kleineres nehmen.');return}
+      FE.logoImg=d;render();toast('Logo übernommen. Unten „Speichern“ tippen');
+    }).catch(function(){toast('Das Bild konnte nicht gelesen werden')});
+  });
+}
+function aePhotoPick(i){
+  aeFile('aephotofile','image/*',function(fl){
+    aeImg(fl,360,true,'image/jpeg',.82).then(function(d){
+      if(FE.team[i]){FE.team[i].b=d;render();toast('Foto übernommen. Unten „Speichern“ tippen')}
+    }).catch(function(){toast('Das Bild konnte nicht gelesen werden')});
+  });
 }
 function startSync(){
   stopSync();
@@ -2477,6 +2662,57 @@ applyTheme();applyPrices();updHint();badge();persist();
 header .hlogo{display:block;width:100%;max-width:300px;margin:0 auto;height:auto}
 .alogo{height:auto}
 .mmlogo{text-align:center;margin:2px 0 14px}.mmlogo svg{width:100%;max-width:200px;height:auto}
+</style>
+<style id="mamo-upd3-css">
+/* Feinschliff: modern & elegant */
+body{background:radial-gradient(1000px 460px at 50% -180px,rgba(216,38,43,.20),transparent 62%),radial-gradient(600px 300px at 100% 0,rgba(201,169,106,.06),transparent 70%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;letter-spacing:-.005em}
+header{padding:26px 0 8px}
+header p{letter-spacing:.32em;font-size:11px;opacity:.75;margin-top:14px}
+.panel{border-radius:22px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.012)),var(--card);border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 22px 44px -26px rgba(0,0,0,.85)}
+.panel h2{font-size:11px;letter-spacing:.24em}
+input[type=text],input[type=date],input[type=time],input[type=number],select{height:50px;border-radius:14px;background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.09);transition:border-color .15s,box-shadow .15s,background .15s}
+html[data-theme=light] input[type=text],html[data-theme=light] input[type=date],html[data-theme=light] input[type=time],html[data-theme=light] input[type=number]{background:#fff;border-color:var(--line)}
+button{border-radius:16px;transition:transform .12s,box-shadow .2s,filter .2s;box-shadow:0 12px 26px -10px rgba(216,38,43,.6),inset 0 1px 0 rgba(255,255,255,.22)}
+button:active{transform:scale(.97);filter:brightness(.95)}
+.bar{background:rgba(14,15,17,.72);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border-top:1px solid rgba(255,255,255,.07)}
+html[data-theme=light] .bar{background:rgba(255,255,255,.78)}
+details{border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),var(--card);border-color:rgba(255,255,255,.07)}
+html[data-theme=light] details{background:var(--card);border-color:var(--line)}
+summary{padding:17px 18px;font-size:15.5px;font-weight:650}
+.box{border-radius:50%;width:26px;height:26px}
+.pos.on{background:rgba(216,38,43,.08)}
+#gearb{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:transform .15s}
+#gearb:active{transform:scale(.92)}
+.mmw{animation:mmin .28s ease}
+@keyframes mmin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.mmh{background:var(--bg);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.mmh h1{font-size:23px;letter-spacing:-.02em}
+.mmt{letter-spacing:.24em;margin:26px 4px 10px}
+#mm .mmr{border-radius:20px;padding:13px 14px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012)),var(--card);border-color:rgba(255,255,255,.07);transition:transform .12s,background .15s}
+#mm .mmr:active{transform:scale(.985);opacity:1}
+#mm .mmr .ic{flex:none;width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:rgba(216,38,43,.13);color:var(--red2)}
+#mm .mmr .ic svg{width:21px;height:21px}
+#mm .mmr .ch{opacity:.5}
+.mmc{border-radius:20px;border-color:rgba(255,255,255,.07)}
+html[data-theme=light] #mm .mmr,html[data-theme=light] .mmc{border-color:var(--line);background:var(--card);box-shadow:0 6px 18px -12px rgba(30,30,30,.25)}
+html[data-theme=light] #mm .mmr .ic{background:rgba(216,38,43,.09)}
+#mm .sb.big{display:block;width:100%;text-align:center;padding:15px;font-size:16px;margin-bottom:6px}
+#mm textarea{width:100%;min-height:104px;padding:12px 14px;font-size:16px;line-height:1.4;color:var(--text);background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;outline:none;font-family:inherit;resize:vertical}
+html[data-theme=light] #mm textarea{background:#fff}
+.mmform input{margin-bottom:6px}
+.aelogo{display:flex;align-items:center;justify-content:center;min-height:90px;padding:16px;margin-bottom:6px;border:1px dashed var(--line);border-radius:16px;background:var(--card2)}
+.aelogo svg,.aelogo img{max-width:230px;width:100%;height:auto}
+.mmlogo img{width:100%;max-width:200px;height:auto}
+.mmempty{color:var(--muted);font-size:13.5px;line-height:1.5}
+.abt{text-align:center;padding-top:4px}
+.abname{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:4px 0 2px}
+.abz{color:var(--muted);font-size:13px}
+.abtx{margin:14px 4px 2px;opacity:.88;font-size:15px;line-height:1.55;white-space:pre-line}
+.tm{display:flex;align-items:center;gap:14px;text-align:left}
+.mmc.tm{padding:14px;margin-top:10px}
+.tm b{display:block;font-size:17px;letter-spacing:-.01em}
+.tm small{display:block;margin-top:3px;color:var(--gold);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase}
+.av{flex:none;width:72px;height:72px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#2a1214,#1a1011);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;color:var(--gold)}
 </style>
 
 </body>
