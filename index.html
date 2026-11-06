@@ -2552,9 +2552,9 @@ function aeSaveForm(){
   aeCollect();
   if(!FE.werk.name){toast('Bitte einen Firmennamen eintragen');return}
   FE.team=FE.team.filter(function(t){return t.n});
-  aeSave(function(){return FE},'Gespeichert. Gilt jetzt auf allen Handys',function(){FE=firmaCur();render()});
+  firmaSave(function(){return FE},'Gespeichert. Gilt jetzt auf allen Handys',function(){FE=firmaCur();render()});
 }
-function aeSave(mod,msg,done){
+function firmaSave(mod,msg,done){
   if(!isChef()){toast('Nur der Chef darf das ändern');return}
   if(!SY.user||!SY.fs){alert('Bitte zuerst anmelden.');return}
   var f=mod(firmaCur())||firmaCur();f=firmaClean(f);
