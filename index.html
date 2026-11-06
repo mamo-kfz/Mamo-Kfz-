@@ -2745,7 +2745,7 @@ function zeitStart(){
   var c=SY.fs.collection('zeit'),q=ZE.chef?c:c.where('uid','==',SY.user.uid);
   ZE.unsub.push(q.onSnapshot(function(s){ZE.docs={};s.forEach(function(d){ZE.docs[d.id]=d.data()});ZE.err='';zeitRender()},
     function(e){ZE.err=(e&&e.code)||'Fehler';if(e&&e.code==='permission-denied')toast('Arbeitszeit: Firestore-Regel für „zeit“ fehlt');zeitRender()}));
-  if(ZE.chef)ZE.unsub.push(SY.fs.collection('mitarbeiter').onSnapshot(function(s){ZE.staff={};s.forEach(function(d){ZE.staff[d.id]=d.data()});zeitRender();try{teamPublish()}catch(err){}},function(){}));
+  if(ZE.chef)ZE.unsub.push(SY.fs.collection('mitarbeiter').onSnapshot(function(s){ZE.staff={};ZE.serr='';s.forEach(function(d){ZE.staff[d.id]=d.data()});zeitRender();try{teamPublish()}catch(err){}},function(e){ZE.serr=(e&&e.code)||'Fehler';zeitRender()}));
   ZE.tick=setInterval(stampBtn,20000);
   stampBtn();
 }
@@ -2812,7 +2812,7 @@ function pZeiten(){
   var who=chef?P.zu:uid;
   return h+zDetail(who,chef);
 }
-function zUebersicht(){
+function zUebersichtOld(){
   var people=zPeople(),h='<div class="mmt">Alle Mitarbeiter</div>';
   if(!people.length)return h+'<p class="mmempty">Noch keine Zeiten.</p>';
   var tot=0;
@@ -3407,12 +3407,30 @@ function swatches(k,cur){
 }
 function zStaffBlock(){
   var h='<div class="mmt">Mitarbeiter</div>',ks=Object.keys(ZE.staff).sort(),cm=chefMail();
+  if(ZE.serr)h+='<p class="mmnote" style="color:var(--red2)">Die Mitarbeiterliste kann nicht gelesen werden ('+E(ZE.serr)+'). Bitte die neuen Firestore-Regeln veröffentlichen.</p>';
   if(cm)h+='<div class="mmc"><div class="prow"><span class="pn">'+E(SY.name||'Chef')+' (Chef)<br><small style="color:var(--muted)">'+E(cm)+'</small></span></div>'+swatches(cm,tlCol(cm,TLD.cc))+'</div>';
   ks.forEach(function(k,i){var s=ZE.staff[k]||{};
     h+='<div class="mmc"><div class="prow"><span class="pn">'+E(s.name||k)+'<br><small style="color:var(--muted)">'+E(s.mail||k)+'</small></span><button type="button" class="sb" data-act="stfreset" data-k="'+E(k)+'">Passwort-Mail</button><button type="button" class="sb" data-act="stfdel" data-k="'+E(k)+'">✕</button></div>'+swatches(k,s.farbe||PAL[(i+1)%PAL.length])+'</div>'});
+  var extra=[];
+  Object.keys(ZE.docs).forEach(function(id){var d=ZE.docs[id],m=String((d&&d.mail)||'').toLowerCase();
+    if(m&&m!==cm&&!ZE.staff[m]&&!extra.some(function(x){return x.m===m}))extra.push({m:m,n:d.name||m,u:d.uid||''})});
+  extra.forEach(function(x){
+    h+='<div class="mmc"><div class="prow"><span class="pn">'+E(x.n)+'<br><small style="color:var(--muted)">'+E(x.m)+' · hat gestempelt, noch nicht in der Verwaltung</small></span><button type="button" class="sb pri" data-act="stfadopt" data-m="'+E(x.m)+'" data-n="'+E(x.n)+'" data-u="'+E(x.u)+'">Aufnehmen</button></div></div>'});
+  if(!ks.length&&!extra.length&&!ZE.serr)h+='<p class="mmnote">Noch keine Mitarbeiter. Lege unten den ersten an.</p>';
   h+='<div class="mmc mmform"><div class="fl">Neuen Mitarbeiter anlegen</div><input type="text" id="stf_n" placeholder="Vor- und Nachname" autocomplete="off"><input type="text" inputmode="email" id="stf_m" placeholder="E-Mail" autocomplete="off" autocapitalize="off" spellcheck="false"><input type="text" id="stf_p" placeholder="Passwort (mindestens 6 Zeichen)" autocomplete="off" autocapitalize="off"><button type="button" class="sb pri" data-act="stfadd" style="width:100%;text-align:center">Konto anlegen</button></div>'
-   +'<p class="mmnote">Der Mitarbeiter meldet sich mit E-Mail und Passwort an und kann sein Passwort selbst unter Einstellungen → „Passwort ändern“ neu setzen. Hat jemand es vergessen, tippe auf „Passwort-Mail“: er bekommt einen Link zum Neusetzen. Die Farbe erscheint im Kalender und bei den Aufträgen. Direkt ein neues Passwort für eine andere Person festlegen kann Firebase aus der App nicht, dafür gibt es den Link.</p>';
+   +'<p class="mmnote">Der Mitarbeiter meldet sich mit E-Mail und Passwort an und kann sein Passwort selbst unter Einstellungen → „Passwort ändern“ neu setzen. Hat jemand es vergessen, tippe auf „Passwort-Mail“: er bekommt einen Link zum Neusetzen. Die Farbe erscheint im Kalender und bei den Aufträgen. Wer schon ein Konto hat (zum Beispiel direkt in Firebase angelegt), kann oben mit derselben E-Mail eingetragen werden. Direkt ein neues Passwort für eine andere Person festlegen kann Firebase aus der App nicht, dafür gibt es den Link.</p>';
   return h;
+}
+function zUebersicht(){
+  var people=zPeople(),h='<div class="mmt">Alle Mitarbeiter</div>';
+  if(!people.length)return h+'<p class="mmempty">Noch keine Zeiten.</p>';
+  var tot=0;
+  people.forEach(function(p){
+    var l=zMonthEntries(p.uid,P.zm).sort(function(a,b){return b.i-a.i}),s=zSum(l),op=zOpen(p.uid);tot+=s;
+    h+='<div class="mmc zper"><button type="button" class="zph" data-act="zwho" data-u="'+E(p.uid)+'"><span class="tx">'+(op?'<span class="dot ok"></span>':'')+E(p.name)+'<small>'+(op?'eingestempelt seit '+zHM(op.i):'nicht eingestempelt')+'</small></span><span class="zs">'+zDurS(s)+' Std</span><span class="ch">›</span></button>'
+     +(l.length?'<div class="zlh"><span>Tag</span><span>Ein – Aus</span><span>Dauer</span></div>'+l.map(function(e){return '<div class="zln"><span>'+zDay(e.i)+'</span><span>'+zHM(e.i)+' – '+(e.o?zHM(e.o):'<b class="on">läuft noch</b>')+'</span><span>'+zDurS((e.o||Date.now())-e.i)+'</span></div>'}).join(''):'<p class="mmnote" style="margin:6px 0 0">In diesem Monat keine Zeiten.</p>')+'</div>';
+  });
+  return h+'<p class="mmnote">Zusammen im '+E(zMonName(P.zm))+': <b>'+zDur(tot)+'</b> ('+zDec(tot)+' Stunden). Auf den Namen tippen zum Bearbeiten.</p>';
 }
 function pStaff(){
   return hdr('Mitarbeiter','set')+(isChef()?zStaffBlock():'<p class="mmnote">Das ist nur für den Chef.</p>');
@@ -3457,6 +3475,7 @@ function act4(act,t,i){
     case 'kdnsave':kdnSave();return 1;
     case 'kdnfz':{var c=custGroups().filter(function(g){return g.id===t.dataset.id})[0];if(!c)return 1;
       P.ke=null;P.pre={kunde:c.name,tel:c.tel,mail:c.mail,adr:c.adr};P.kret='kdn';P.page='kform';render();mm.scrollTop=0;return 1}
+    case 'stfadopt':{if(!isChef())return 1;var ex=t.dataset;SY.fs.collection('mitarbeiter').doc(ex.m).set({name:ex.n||ex.m,mail:ex.m,uid:ex.u||'',_u:Date.now(),farbe:nextCol()}).then(function(){toast('Aufgenommen')}).catch(syErr);return 1}
     case 'staff':if(!isChef()){toast('Nur für den Chef');return 1}P.page='staff';render();mm.scrollTop=0;return 1;
     case 'stfcol':{if(!isChef())return 1;var k=t.dataset.k,c2=t.dataset.c;
       if(k===chefMail()){TLD.cc=c2;teamPublish(true);render()}
@@ -3633,11 +3652,9 @@ body:not(.vneu) #startview{display:block}
 .sttc img,.sttc span{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 8px;background:var(--card2);font-weight:700;color:var(--gold)}
 .sttc b{display:block;font-size:14px}
 .sttc small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-.stgal{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-#startview .stth{flex:none;width:72%;max-width:300px;scroll-snap-align:start;padding:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);text-align:left;color:var(--text)}
-.stth img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
-.stgal.fl .stth{width:62%;max-width:250px}
-.stgal.fl .stth img{aspect-ratio:3/4;object-fit:contain;background:#fff}
+.stgal{display:flex;flex-direction:column;gap:14px}
+#startview .stth{display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);text-align:left;color:var(--text)}
+.stth img{display:block;width:100%;height:auto}
 .stth small{display:block;padding:8px 10px;font-size:12.5px;color:var(--muted)}
 #startview .stempty{width:100%;padding:18px;border:1px dashed var(--line);border-radius:16px;background:none;color:var(--muted);font:500 14px/1.4 inherit;font-family:inherit}
 #startview .stlnk{display:block;width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--muted);font:600 14px/1.2 inherit;font-family:inherit}
@@ -3675,6 +3692,15 @@ body:not(.vneu) #startview{display:block}
 #mm .sted{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 #mm .sted img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none}
 #mm .sted input{flex:1;min-width:0}
+#mm .zper{padding:0;overflow:hidden}
+#mm .zph{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;background:none;border:0;color:var(--text);text-align:left}
+#mm .zph .tx{flex:1;min-width:0;font-weight:600}#mm .zph small{display:block;color:var(--muted);font-weight:400;font-size:12.5px;margin-top:2px}
+#mm .zph .zs{font-weight:700}#mm .zph .ch{color:var(--muted)}
+#mm .zlh,#mm .zln{display:grid;grid-template-columns:1fr 1.5fr .8fr;gap:6px;padding:7px 14px;font-size:14px}
+#mm .zlh{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line)}
+#mm .zln{border-top:1px solid var(--line)}#mm .zln span:last-child{text-align:right;font-weight:600}#mm .zlh span:last-child{text-align:right}
+#mm .zln .on{color:#30a46c}
+#mm .zper>.mmnote{padding:0 14px 12px}
 </style>
 </body>
 </html>
