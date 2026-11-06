@@ -958,7 +958,7 @@ function logoDokSvg(cls,ink,sub){
 function isChef(){
   var c=String(WERK.chef||'').trim().toLowerCase();
   if(!c)return true;
-  var m='';try{m=String((SY&&SY.user&&SY.user.email)||'').trim().toLowerCase()}catch(e){}
+  var m='';try{var u=window.SY&&window.SY.user;m=String((u&&u.email)||'').trim().toLowerCase()}catch(e){}
   return m===c;
 }
 function setzeIcon(){
@@ -2308,6 +2308,7 @@ if(canDir)idbGet('dir').then(function(h){if(h){sfDir=h}}).catch(function(){});
 /* ---------- Gemeinsame Datenbank (Firebase) ---------- */
 var FBCFG={apiKey:"AIzaSyCf73u0E3E9nliES3G-4V3ASDb3oXm5_6c",authDomain:"mamo-kfz-werkstatt.firebaseapp.com",projectId:"mamo-kfz-werkstatt",storageBucket:"mamo-kfz-werkstatt.firebasestorage.app",messagingSenderId:"946063480310",appId:"1:946063480310:web:9e1032bd30ff1158de23d7"};
 var SY={off:false,user:null,name:'',last:{autos:{},zahl:{},einst:null},srv:{autos:false,zahl:false,einst:false},unsubs:[],applying:false,t:null};
+window.SY=SY;
 try{SY.name=localStorage.getItem('mamo_user')||''}catch(err){}
 window.__ma=SY.name;
 try{var L0=JSON.parse(localStorage.getItem('mamo_sync_v1')||'null');if(L0&&L0.autos&&L0.zahl)SY.last={autos:L0.autos,zahl:L0.zahl,einst:L0.einst||null}}catch(err){}
